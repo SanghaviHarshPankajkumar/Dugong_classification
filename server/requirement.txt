@@ -1,0 +1,12 @@
+fastapi
+uvicorn
+python-multipart
+pillow
+torch
+torchvision
+ultralytics
+python-jose[cryptography]
+passlib[bcrypt]
+google-auth
+google-auth-oauthlib
+python-dotenv
