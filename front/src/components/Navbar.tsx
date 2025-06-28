@@ -2,7 +2,6 @@ import React from "react";
 import {
   LogOut,
   Menu,
-  Search,
   Upload,
   Eye,
 } from "lucide-react";
@@ -17,6 +16,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 // import { Badge } from "@/components/ui/badge";
 import { NavLink, useNavigate } from "react-router-dom";
+import Cookies from 'js-cookie';
 
 interface NavbarProps {
   imageCount?: number;
@@ -42,10 +42,7 @@ const Navbar: React.FC<NavbarProps> = ({
 
   const navigate = useNavigate();
   const handleLogout = () => {
-    // Optional: clear auth state or tokens
-    // localStorage.removeItem("token");
-    // setAuth(null); etc.
-
+    Cookies.remove('access_token');
     navigate("/");
   };
   return (
@@ -62,9 +59,9 @@ const Navbar: React.FC<NavbarProps> = ({
                 <h1 className="text-xl font-bold bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent">
                   Dugong Monitor
                 </h1>
-                <p className="text-xs text-slate-500 -mt-1">
+                {/* <p className="text-xs text-slate-500 -mt-1">
                   Marine Conservation AI
-                </p>
+                </p> */}
               </div>
             </div>
           </div>
@@ -72,12 +69,12 @@ const Navbar: React.FC<NavbarProps> = ({
           {/* Center Section - Search & Status */}
           <div className="hidden lg:flex items-center gap-4">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
+              {/* <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
               <input
                 type="text"
                 placeholder="Search images..."
                 className="pl-10 pr-4 py-2 w-64 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-slate-50"
-              />
+              /> */}
             </div>
 
             {/* Status Badge */}

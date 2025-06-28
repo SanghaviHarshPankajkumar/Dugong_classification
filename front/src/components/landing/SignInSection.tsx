@@ -22,7 +22,7 @@ const loginSchema = z.object({
 
 type LoginFormInputs = z.infer<typeof loginSchema>;
 
-export const SignInSection = () => {
+const SignInSection = () => {
   const navigate = useNavigate();
   const setToken = useAuthStore((state) => state.setToken);
   const [showPassword, setShowPassword] = useState(false);
@@ -37,23 +37,47 @@ export const SignInSection = () => {
 
   const loginMutation = useMutation({
     mutationFn: async (data: LoginFormInputs) => {
-      const response = await axios.post("http://127.0.0.1:8000/auth/login", data);
-      return response.data;
+      try {
+        const response = await axios.post("http://127.0.0.1:8000/auth/login", data, {
+          headers: {
+            "Content-Type": "application/json",
+          },
+          timeout: 10000,
+        });
+        return response.data;
+      } catch (error) {
+        console.error("Login API Error:", error);
+        if (axios.isAxiosError(error)) {
+          throw new Error(error.response?.data?.message || "Login failed");
+        }
+        throw error;
+      }
     },
     onSuccess: (data) => {
+      console.log("Login success data:", data);
       const token = data.access_token;
-      Cookies.set("access_token", token, { expires: 7 });
-      setToken(token);
-      toast.success("Logged in successfully");
-      navigate("/dashboard");
+      if (token) {
+        Cookies.set("access_token", token, { expires: 7 });
+        setToken(token);
+        toast.success("Logged in successfully");
+        navigate("/dashboard");
+      } else {
+        toast.error("No access token received");
+      }
     },
-    onError: () => {
-      toast.error("Login failed. Please check your credentials.");
+    onError: (error: Error) => {
+      console.error("Login error:", error);
+      toast.error(error.message || "Login failed. Please check your credentials.");
     },
   });
 
   const onSubmit = (data: LoginFormInputs) => {
+    console.log("Form submission data:", data);
     loginMutation.mutate(data);
+  };
+
+  const togglePasswordVisibility = () => {
+    setShowPassword((prev) => !prev);
   };
 
   return (
@@ -88,28 +112,33 @@ export const SignInSection = () => {
                   type={showPassword ? "text" : "password"}
                   placeholder="Enter your password"
                   {...register("password")}
-                  className={`pr-10 ${errors.password ? "border-red-500 focus-visible:ring-red-500" : ""}`}
+                  className={`pr-10 ${errors.password ? "border-red-500 focus-visible:ring-red-500" : ""
+                    }`}
                 />
                 <button
                   type="button"
-                  onClick={() => setShowPassword((prev) => !prev)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
-                  tabIndex={-1}
+                  onClick={togglePasswordVisibility}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
                 >
-                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  {showPassword ? (
+                    <EyeOff className="w-4 h-4" />
+                  ) : (
+                    <Eye className="w-4 h-4" />
+                  )}
                 </button>
-                {errors.password && (
-                  <p className="text-red-500 text-sm mt-1">
-                    {errors.password.message}
-                  </p>
-                )}
               </div>
+              {errors.password && (
+                <p className="text-red-500 text-sm mt-1">
+                  {errors.password.message}
+                </p>
+              )}
             </div>
 
             {/* Submit Button */}
             <Button
               type="submit"
-              className="w-full bg-blue-500 text-white rounded hover:bg-blue-700"
+              className="w-full bg-blue-500 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={loginMutation.isPending}
             >
               {loginMutation.isPending ? "Signing In..." : "Sign In"}
@@ -120,3 +149,5 @@ export const SignInSection = () => {
     </div>
   );
 };
+
+export default SignInSection;
