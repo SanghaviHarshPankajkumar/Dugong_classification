@@ -14,6 +14,8 @@ from api.routes import router as api_router
 # from auth.google_auth import router as auth_router
 from core.cleanup import cleanup_expired_sessions
 from core.logger import setup_logger
+from core.config import BASE_DIR
+from fastapi.staticfiles import StaticFiles
 
 # Load environment variables from .env file
 load_dotenv()
@@ -29,6 +31,9 @@ app = FastAPI(title="YOLO Image Uploader")
 app_logger.info("App initialized")
 app.include_router(login_router)
 
+# Serve uploads directory as static files
+app.mount(f"/{BASE_DIR.name}", StaticFiles(directory=BASE_DIR), name="uploads")
+
 # Add middleware
 app.add_middleware(
     CORSMiddleware,
@@ -42,7 +47,7 @@ app.add_middleware(
 app.add_middleware(SessionMiddleware, secret_key=SECRET_KEY)
 
 # Ensure base directories exist
-os.makedirs("uploads", exist_ok=True)
+os.makedirs(BASE_DIR, exist_ok=True)
 
 # Background task: periodically clean expired session folders
 @app.on_event("startup")

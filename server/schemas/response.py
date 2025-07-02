@@ -21,7 +21,6 @@ class ImageResult(BaseModel):
 
     imageId: int
     imageUrl: str
-    labelUrl: str
     dugongCount: int
     calfCount: int
     imageClass: str

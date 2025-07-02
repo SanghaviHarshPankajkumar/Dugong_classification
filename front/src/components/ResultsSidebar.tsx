@@ -2,15 +2,36 @@ import { Info, ThumbsDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-
 import { useUploadStore } from "@/store/upload";
 
 interface ResultsSidebarProps {
-  currentImageData: any; // Consider defining a more specific type
+  currentImageData: any;
   markedPoorImages: string[];
   onMarkPoor: (imageId: string) => void;
 }
+const extractFormattedDate = (imageName: string) => {
+  // Regular expression to match the pattern after first underscore with 8 digits (assumed to be YYYYMMDD)
+  const match = imageName.match(/_(\d{8})/);
 
+  if (!match || match.length < 2) return "not found";
+
+  const rawDate = match[1];
+  const year = rawDate.substring(0, 4);
+  const month = rawDate.substring(4, 6);
+  const day = rawDate.substring(6, 8);
+
+  // Basic date validation (not checking leap years, etc., but enough to catch typos)
+  const dateObject = new Date(`${year}-${month}-${day}`);
+  if (
+    dateObject.getFullYear().toString() !== year ||
+    (dateObject.getMonth() + 1).toString().padStart(2, '0') !== month ||
+    dateObject.getDate().toString().padStart(2, '0') !== day
+  ) {
+    return "not found";
+  }
+
+  return `${day}/${month}/${year}`;
+}
 const ResultsSidebar = ({
   currentImageData,
   markedPoorImages,
@@ -28,7 +49,7 @@ const ResultsSidebar = ({
 
     if (window.confirm("Are you sure?")) {
       const targetClass =
-        currentImageData.imageClass === "A" ? "Class B" : "Class A";
+        currentImageData?.imageClass
       const imageName = currentImageData.imageUrl.split("/").pop();
 
       try {
@@ -40,9 +61,9 @@ const ResultsSidebar = ({
               "Content-Type": "application/json",
             },
             body: JSON.stringify({
-              sessionId: sessionId,
-              imageName: imageName,
-              targetClass: targetClass,
+              sessionId,
+              imageName,
+              targetClass,
             }),
           }
         );
@@ -52,111 +73,104 @@ const ResultsSidebar = ({
           console.log("Image marked as poor quality successfully.");
         } else {
           const errorData = await response.json();
-          console.error(
-            "Failed to mark image as poor quality:",
-            errorData.detail
-          );
+          console.error("Failed:", errorData.detail);
         }
       } catch (error) {
-        console.error("An error occurred:", error);
+        console.error("Error:", error);
       }
     }
   };
+
   return (
-    <div className="lg:col-span-1 flex flex-col gap-4 h-[640px]">
-      <div className="flex-1 flex flex-col gap-4">
-        {/* Detection Results */}
-        <Card className="flex-1 border-0 shadow-2xl bg-white/20 backdrop-blur-md">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-lg flex items-center gap-2 text-white">
-              <Info className="w-5 h-5 text-blue-200" />
-              Detection Results
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4 h-full">
-            <div className="flex items-center justify-between p-3 bg-white/10 backdrop-blur-sm rounded-lg border border-white/20">
-              <span className="font-medium text-white">Dugong Count</span>
-              <Badge className="bg-blue-600 hover:bg-blue-700 text-white">
-                {currentImageData?.dugongCount || 0}
-              </Badge>
-            </div>
+    <aside className="lg:col-span-1 flex flex-col gap-4 h-[640px]">
+      {/* Detection Results */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base font-semibold">
+            <Info className="w-4 h-4 text-muted-foreground" />
+            Detection Results
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="flex justify-between items-center">
+            <span className="text-sm font-medium text-muted-foreground">Dugong Count</span>
+            <Badge variant="secondary">{currentImageData?.dugongCount || 0}</Badge>
+          </div>
+          <div className="flex justify-between items-center">
+            <span className="text-sm font-medium text-muted-foreground">Cow Calf Count</span>
+            <Badge variant="secondary">{currentImageData?.calfCount || 0}</Badge>
+          </div>
+          <div className="flex justify-between items-center">
+            <span className="text-sm font-medium text-muted-foreground">Total Count</span>
+            <Badge variant="secondary">{(2 * (currentImageData?.calfCount) + currentImageData?.dugongCount) || 0}</Badge>
+          </div>
+          <div className="flex justify-between items-center">
+            <span className="text-sm font-medium text-muted-foreground">Classification</span>
+            <Badge variant="outline"> {currentImageData?.imageClass || "N/A"}</Badge>
+          </div>
+        </CardContent>
+      </Card>
 
-            <div className="flex items-center justify-between p-3 bg-white/10 backdrop-blur-sm rounded-lg border border-white/20">
-              <span className="font-medium text-white">Cow Calf Count</span>
-              <Badge className="bg-green-600 hover:bg-green-700 text-white">
-                {currentImageData?.calfCount || 0}
-              </Badge>
-            </div>
-
-            <div className="flex items-center justify-between p-3 bg-white/10 backdrop-blur-sm rounded-lg border border-white/20">
-              <span className="font-medium text-white">Classification</span>
-              <Badge className="bg-white/20 border-white/30 text-white font-semibold">
-                Class {currentImageData?.imageClass || "N/A"}
-              </Badge>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Meta Data */}
-        <Card className="flex-1 border-0 shadow-2xl bg-white/20 backdrop-blur-md">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-lg flex items-center gap-2 text-white">
-              <Info className="w-5 h-5 text-blue-200" />
-              Meta Data
-            </CardTitle>
-          </CardHeader>
-
-          <CardContent className="space-y-4 h-full">
-            <div className="flex items-center justify-between p-3 bg-white/10 backdrop-blur-sm rounded-lg border border-white/20">
-              <span className="font-medium text-white">Date</span>
-              <Badge className="bg-purple-600 hover:bg-purple-700 text-white">
-                {currentImageData?.createdAt
-                  ? new Date(currentImageData.createdAt).toLocaleDateString()
-                  : new Date().toLocaleDateString()}
-              </Badge>
-            </div>
-
-            <div className="flex items-center justify-between p-3 bg-white/10 backdrop-blur-sm rounded-lg border border-white/20">
-              <span className="font-medium text-white">Image Name</span>
-              <Badge
-                className="bg-orange-600 hover:bg-orange-700 text-white max-w-32 truncate"
-                title={
-                  currentImageData?.imageUrl
-                    ? currentImageData.imageUrl.split("/").pop()
-                    : "image.jpg"
-                }
-              >
-                {currentImageData?.imageUrl
-                  ? currentImageData.imageUrl
-                    .split("/")
-                    .pop()
-                    .substring(0, 15) + "..."
-                  : "image.jpg"}
-              </Badge>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Quality Assessment */}
-        <Card className="border-0 shadow-2xl bg-white/20 backdrop-blur-md">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-lg text-white">
-              Quality Assessment
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="h-full items-end">
-            <Button
-              className="w-full gap-2 bg-red-500 hover:bg-red-600 text-white shadow-lg transition-all duration-200 transform hover:scale-105 disabled:opacity-60"
-              onClick={handleMarkPoor}
-              disabled={isMarkedPoor}
+      {/* Meta Data */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base font-semibold">
+            <Info className="w-4 h-4 text-muted-foreground" />
+            Meta Data
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="flex justify-between items-center">
+            <span className="text-sm font-medium text-muted-foreground">Captured Date</span>
+            <Badge variant="secondary">
+              {extractFormattedDate(currentImageData?.imageUrl.split("/").pop())}
+            </Badge>
+          </div>
+          <div className="flex justify-between items-center">
+            <span className="text-sm font-medium text-muted-foreground">Processed Date</span>
+            <Badge variant="secondary">
+              {currentImageData?.createdAt
+                ? new Date(currentImageData.createdAt).toLocaleDateString()
+                : new Date().toLocaleDateString()}
+            </Badge>
+          </div>
+          <div className="flex justify-between items-center">
+            <span className="text-sm font-medium text-muted-foreground">Image Name</span>
+            <Badge
+              variant="outline"
+              title={
+                currentImageData?.imageUrl
+                  ? currentImageData.imageUrl.split("/").pop()
+                  : "image.jpg"
+              }
+              className="max-w-[140px] truncate"
             >
-              <ThumbsDown className="w-4 h-4" />
-              {isMarkedPoor ? "Marked as Poor Quality" : "Mark as Poor Quality"}
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
+              {currentImageData?.imageUrl
+                ? currentImageData.imageUrl.split("/").pop()
+                : "image.jpg"}
+            </Badge>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Quality Assessment */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base font-semibold">Quality Assessment</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Button
+            variant="destructive"
+            className="w-full gap-2"
+            onClick={handleMarkPoor}
+            disabled={isMarkedPoor}
+          >
+            <ThumbsDown className="w-4 h-4" />
+            {isMarkedPoor ? "Marked as Poor Quality" : "Mark as Poor Quality"}
+          </Button>
+        </CardContent>
+      </Card>
+    </aside>
   );
 };
 

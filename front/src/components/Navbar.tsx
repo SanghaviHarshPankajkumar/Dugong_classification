@@ -17,6 +17,8 @@ import {
 // import { Badge } from "@/components/ui/badge";
 import { NavLink, useNavigate } from "react-router-dom";
 import Cookies from 'js-cookie';
+import { useAuthStore } from "@/store/auth";
+import { useImageStore } from "@/store/image";
 
 interface NavbarProps {
   imageCount?: number;
@@ -43,6 +45,10 @@ const Navbar: React.FC<NavbarProps> = ({
   const navigate = useNavigate();
   const handleLogout = () => {
     Cookies.remove('access_token');
+    useAuthStore.getState().clearToken();
+    if (useImageStore) {
+      useImageStore.getState().setApiResponse(null);
+    }
     navigate("/");
   };
   return (
@@ -57,11 +63,8 @@ const Navbar: React.FC<NavbarProps> = ({
               </div>
               <div className="hidden sm:block">
                 <h1 className="text-xl font-bold bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent">
-                  Dugong Monitor
+                  Dugong Taxanomy
                 </h1>
-                {/* <p className="text-xs text-slate-500 -mt-1">
-                  Marine Conservation AI
-                </p> */}
               </div>
             </div>
           </div>

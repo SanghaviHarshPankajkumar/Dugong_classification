@@ -220,3 +220,5 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+/model

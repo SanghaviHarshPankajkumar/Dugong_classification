@@ -1,38 +1,36 @@
+import { useEffect } from "react";
+import Cookies from "js-cookie";
+import { useAuthStore } from "@/store/auth";
 import { Routes, Route, Navigate } from 'react-router-dom';
 import LandingPage from './pages/LandingPage';
 import DashboardPage from './pages/DashboardPage';
 
-// Helper function to get cookie value
-const getCookie = (name: string) => {
-  const value = `; ${document.cookie}`;
-  const parts = value.split(`; ${name}=`);
-  if (parts.length === 2) {
-    const part = parts.pop();
-    return part ? part.split(';').shift() : null;
-  }
-  return null;
-};
-
-// Helper function to check authentication
-const isAuthenticated = () => {
-  const token = getCookie('access_token');
-  return token;
-};
-
-// Protected Route Component
-import React from 'react';
-
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  return isAuthenticated() ? children : <Navigate to="/" replace />;
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  if (!isAuthenticated) return <Navigate to="/" replace />;
+  return <>{children}</>;
 };
 
 const App = () => {
+  const setToken = useAuthStore((state) => state.setToken);
+  const token = useAuthStore((state) => state.token);
+
+  // Sync Zustand with cookie on app load
+  useEffect(() => {
+    const cookieToken = Cookies.get("access_token");
+    if (cookieToken && !token) {
+      setToken(cookieToken);
+    }
+  }, [setToken, token]);
+
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+
   return (
     <Routes>
       <Route
         path="/"
         element={
-          isAuthenticated() ?
+          isAuthenticated ?
             <Navigate to="/dashboard" replace /> :
             <LandingPage />
         }

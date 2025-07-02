@@ -14,13 +14,13 @@ logger = setup_logger("cleanup", "logs/cleanup.log")
 # Matches timestamp-based folder names (format: YYYYMMDDTHHMMSSZ_*)
 SESSION_REGEX = re.compile(r"^(\d{8}T\d{6}Z)_.+")
 
-async def cleanup_expired_sessions(interval_seconds: int = 120, expiry_minutes: int = 2):
+async def cleanup_expired_sessions(interval_seconds: int = 600, expiry_minutes: int = 60):
     """
     Monitor and remove expired session folders automatically.
     
     Args:
-        interval_seconds: Cleanup interval (default: 120s)
-        expiry_minutes: Session expiry time (default: 2min)
+        interval_seconds: Cleanup interval (default: 3600s / 1 hour)
+        expiry_minutes: Session expiry time (default: 60min)
     """
     logger.info("Cleanup service started")
     while True:

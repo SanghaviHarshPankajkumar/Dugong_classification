@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -22,6 +22,18 @@ const loginSchema = z.object({
 
 type LoginFormInputs = z.infer<typeof loginSchema>;
 
+interface LoginResponse {
+  access_token?: string;
+  token?: string;
+  message?: string;
+}
+
+interface ApiError {
+  message?: string;
+  detail?: string;
+  error?: string;
+}
+
 const SignInSection = () => {
   const navigate = useNavigate();
   const setToken = useAuthStore((state) => state.setToken);
@@ -31,48 +43,76 @@ const SignInSection = () => {
     register,
     handleSubmit,
     formState: { errors },
+    reset,
   } = useForm<LoginFormInputs>({
     resolver: zodResolver(loginSchema),
+    defaultValues: {
+      email: "",
+      password: "",
+    },
   });
 
   const loginMutation = useMutation({
-    mutationFn: async (data: LoginFormInputs) => {
+    mutationFn: async (data: LoginFormInputs): Promise<LoginResponse> => {
       try {
-        const response = await axios.post("http://127.0.0.1:8000/auth/login", data, {
-          headers: {
-            "Content-Type": "application/json",
-          },
-          timeout: 10000,
-        });
+        const response = await axios.post<LoginResponse>(
+          "http://127.0.0.1:8000/auth/login",
+          data,
+          {
+            headers: {
+              "Content-Type": "application/json",
+            },
+            timeout: 10000,
+          }
+        );
         return response.data;
       } catch (error) {
-        console.error("Login API Error:", error);
+
         if (axios.isAxiosError(error)) {
-          throw new Error(error.response?.data?.message || "Login failed");
+          const apiError = error.response?.data as ApiError;
+          const errorMessage =
+            apiError?.message ||
+            apiError?.detail ||
+            apiError?.error ||
+            "Login failed. Please check your credentials.";
+
+          throw new Error(errorMessage);
         }
-        throw error;
+
+        throw new Error("Network error. Please try again.");
       }
     },
-    onSuccess: (data) => {
-      console.log("Login success data:", data);
-      const token = data.access_token;
+    onSuccess: (data: LoginResponse) => {
+      const token = data.access_token || data.token;
+
       if (token) {
-        Cookies.set("access_token", token, { expires: 7 });
-        setToken(token);
-        toast.success("Logged in successfully");
-        navigate("/dashboard");
+        try {
+          Cookies.set("access_token", token, {
+            expires: 7,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict'
+          });
+          setToken(token);
+          toast.success("Logged in successfully");
+          navigate("/dashboard", { replace: true }); // Move this up
+          // reset();
+        } catch (cookieError) {
+          console.error("Cookie setting error:", cookieError);
+          toast.error("Login successful but session setup failed");
+        }
       } else {
-        toast.error("No access token received");
+        console.error("No access token in response:", data);
+        toast.error("Login failed: No access token received");
       }
     },
     onError: (error: Error) => {
       console.error("Login error:", error);
-      toast.error(error.message || "Login failed. Please check your credentials.");
+      toast.error(error.message);
     },
   });
 
   const onSubmit = (data: LoginFormInputs) => {
-    console.log("Form submission data:", data);
+    console.log("Form submission data:", { ...data, password: "[REDACTED]" });
     loginMutation.mutate(data);
   };
 
@@ -82,44 +122,68 @@ const SignInSection = () => {
 
   return (
     <div className="flex items-center justify-center md:w-1/2 w-full p-6 bg-white">
-      <Card className="w-full max-w-md">
+      <Card className="w-full max-w-md shadow-lg">
         <CardContent className="p-6">
-          <h2 className="text-2xl font-semibold text-center mb-6">Sign In</h2>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            {/* Email */}
+          <h2 className="text-2xl font-semibold text-center mb-6 text-gray-800">
+            Sign In
+          </h2>
+
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
+            {/* Email Field */}
             <div>
+              <label htmlFor="email" className="sr-only">
+                Email Address
+              </label>
               <Input
+                id="email"
                 type="email"
                 placeholder="Enter your email"
+                autoComplete="email"
                 {...register("email")}
                 className={
                   errors.email
                     ? "border-red-500 focus-visible:ring-red-500"
-                    : ""
+                    : "border-gray-300 focus-visible:ring-blue-500"
                 }
+                aria-invalid={errors.email ? "true" : "false"}
+                aria-describedby={errors.email ? "email-error" : undefined}
               />
               {errors.email && (
-                <p className="text-red-500 text-sm mt-1">
+                <p
+                  id="email-error"
+                  className="text-red-500 text-sm mt-1"
+                  role="alert"
+                >
                   {errors.email.message}
                 </p>
               )}
             </div>
 
-            {/* Password with Toggle */}
+            {/* Password Field with Toggle */}
             <div>
+              <label htmlFor="password" className="sr-only">
+                Password
+              </label>
               <div className="relative">
                 <Input
+                  id="password"
                   type={showPassword ? "text" : "password"}
                   placeholder="Enter your password"
+                  autoComplete="current-password"
                   {...register("password")}
-                  className={`pr-10 ${errors.password ? "border-red-500 focus-visible:ring-red-500" : ""
+                  className={`pr-10 ${errors.password
+                    ? "border-red-500 focus-visible:ring-red-500"
+                    : "border-gray-300 focus-visible:ring-blue-500"
                     }`}
+                  aria-invalid={errors.password ? "true" : "false"}
+                  aria-describedby={errors.password ? "password-error" : undefined}
                 />
                 <button
                   type="button"
                   onClick={togglePasswordVisibility}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded"
                   aria-label={showPassword ? "Hide password" : "Show password"}
+                  tabIndex={0}
                 >
                   {showPassword ? (
                     <EyeOff className="w-4 h-4" />
@@ -129,7 +193,11 @@ const SignInSection = () => {
                 </button>
               </div>
               {errors.password && (
-                <p className="text-red-500 text-sm mt-1">
+                <p
+                  id="password-error"
+                  className="text-red-500 text-sm mt-1"
+                  role="alert"
+                >
                   {errors.password.message}
                 </p>
               )}
@@ -138,7 +206,7 @@ const SignInSection = () => {
             {/* Submit Button */}
             <Button
               type="submit"
-              className="w-full bg-blue-500 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
               disabled={loginMutation.isPending}
             >
               {loginMutation.isPending ? "Signing In..." : "Sign In"}
@@ -146,6 +214,23 @@ const SignInSection = () => {
           </form>
         </CardContent>
       </Card>
+    </div>
+  );
+};
+
+const DashboardPage = () => {
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      navigate("/signin", { replace: true });
+    }
+  }, [isAuthenticated, navigate]);
+
+  return (
+    <div>
+      {/* Dashboard content goes here */}
     </div>
   );
 };
