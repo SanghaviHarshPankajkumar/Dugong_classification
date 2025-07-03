@@ -5,7 +5,7 @@ Handles model inference and detection result processing.
 
 from pathlib import Path
 from ultralytics import YOLO
-from core.config import MODEL_PATH, BASE_DIR
+from core.config import MODEL_PATH, BASE_DIR,CLASSIFICATION_MODEL_PATH
 from core.logger import setup_logger
 from typing import List, Tuple
 
@@ -16,6 +16,7 @@ import cv2
 
 logger = setup_logger("model_service", "logs/model_service.log")
 model = YOLO(MODEL_PATH)
+classification_model = YOLO(CLASSIFICATION_MODEL_PATH)
 
 def fully_dynamic_nms(preds, iou_min=0.1, iou_max=0.6):
     from ultralytics.engine.results import Boxes
@@ -101,8 +102,11 @@ def run_model_on_images(
         class_ids = res.boxes.cls.int().tolist() if res.boxes is not None else []
         dugong_count = class_ids.count(0)
         calf_count = class_ids.count(1)
-        image_class = "Feeding" if dugong_count > calf_count else "Resting"
-
+        # find the class of the image
+        temp_results = classification_model.predict(image_path,  save=False,show_conf=False,project=None)
+        top5_class_names = temp_results[0].names
+        top1_class_id = temp_results[0].probs.top1
+        image_class = top5_class_names[top1_class_id]
         label_path = label_dir / f"{image_path.stem}.txt"
 
         try:
