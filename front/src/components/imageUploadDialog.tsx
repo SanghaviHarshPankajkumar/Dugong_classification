@@ -1,3 +1,4 @@
+//imageUploadDialog.tsx
 import { useState } from "react";
 import type { DragEvent, ChangeEvent, ReactNode } from "react";
 import { Upload, CloudUpload, Plus, Image, Loader2 } from "lucide-react";
@@ -33,7 +34,7 @@ const ImageUploadDialog = ({
   const [uploadedImages, setUploadedImages] = useState<ImageFile[]>([]);
   const [dragActive, setDragActive] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
-  const setSessionId = useUploadStore((state) => state.setSessionId);
+  const { setSessionId, resetSessionTimer, sessionId } = useUploadStore();
 
   const handleDrag = (e: DragEvent<HTMLDivElement>) => {
     e.preventDefault();
@@ -91,16 +92,18 @@ const ImageUploadDialog = ({
 
   const handleConfirm = async () => {
     if (uploadedImages.length === 0) return;
-
+    if (!sessionId) {
+      alert("Session ID not found. Please log in again.");
+      return;
+    }
     setIsUploading(true);
-
     try {
       // Create FormData and append files
       const formData = new FormData();
       uploadedImages.forEach((image) => {
         formData.append("files", image.file);
       });
-
+      formData.append("session_id", sessionId);
       // Make API call to your FastAPI endpoint
       const response = await fetch(
         "http://localhost:8000/api/upload-multiple/",
@@ -109,14 +112,15 @@ const ImageUploadDialog = ({
           body: formData,
         }
       );
-
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       const apiResponse = await response.json();
       // Pass the API response to parent component
       onImageUploaded?.(apiResponse);
+      // Set session ID and reset timer
       setSessionId(apiResponse.sessionId);
+      resetSessionTimer(); // Reset the 30-minute timer
       setIsOpen(false);
       setUploadedImages([]);
     } catch (error) {

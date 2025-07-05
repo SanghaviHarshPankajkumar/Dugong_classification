@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -26,6 +26,8 @@ interface LoginResponse {
   access_token?: string;
   token?: string;
   message?: string;
+  username?: string;
+  email?: string;
 }
 
 interface ApiError {
@@ -37,13 +39,15 @@ interface ApiError {
 const SignInSection = () => {
   const navigate = useNavigate();
   const setToken = useAuthStore((state) => state.setToken);
+  const setUsername = useAuthStore((state) => state.setUsername);
+  const setEmail = useAuthStore((state) => state.setEmail);
+  const setSessionId = useAuthStore((state) => state.setSessionId);
   const [showPassword, setShowPassword] = useState(false);
 
   const {
     register,
     handleSubmit,
     formState: { errors },
-    reset,
   } = useForm<LoginFormInputs>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
@@ -55,9 +59,11 @@ const SignInSection = () => {
   const loginMutation = useMutation({
     mutationFn: async (data: LoginFormInputs): Promise<LoginResponse> => {
       try {
+        // Ensure email is sent as lowercase
+        const payload = { ...data, email: data.email.toLowerCase() };
         const response = await axios.post<LoginResponse>(
           "http://127.0.0.1:8000/auth/login",
-          data,
+          payload,
           {
             headers: {
               "Content-Type": "application/json",
@@ -65,9 +71,9 @@ const SignInSection = () => {
             timeout: 10000,
           }
         );
+        console.log(response.data)
         return response.data;
       } catch (error) {
-
         if (axios.isAxiosError(error)) {
           const apiError = error.response?.data as ApiError;
           const errorMessage =
@@ -82,20 +88,24 @@ const SignInSection = () => {
         throw new Error("Network error. Please try again.");
       }
     },
-    onSuccess: (data: LoginResponse) => {
+    onSuccess: (data: LoginResponse & { session_id?: string }) => {
       const token = data.access_token || data.token;
 
       if (token) {
         try {
           Cookies.set("access_token", token, {
             expires: 7,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'strict'
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "strict",
           });
           setToken(token);
+          setUsername(data.username || "User");
+          setEmail(data.email || "user@gmail.com")
+          if (data.session_id) {
+            setSessionId(data.session_id);
+          }
           toast.success("Logged in successfully");
-          navigate("/dashboard", { replace: true }); // Move this up
-          // reset();
+          navigate("/dashboard", { replace: true });
         } catch (cookieError) {
           console.error("Cookie setting error:", cookieError);
           toast.error("Login successful but session setup failed");
@@ -112,7 +122,7 @@ const SignInSection = () => {
   });
 
   const onSubmit = (data: LoginFormInputs) => {
-    console.log("Form submission data:", { ...data, password: "[REDACTED]" });
+    // console.log("Form submission data:", { ...data, password: "[REDACTED]" });
     loginMutation.mutate(data);
   };
 
@@ -128,7 +138,11 @@ const SignInSection = () => {
             Sign In
           </h2>
 
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
+          <form
+            onSubmit={handleSubmit(onSubmit)}
+            className="space-y-4"
+            noValidate
+          >
             {/* Email Field */}
             <div>
               <label htmlFor="email" className="sr-only">
@@ -176,7 +190,9 @@ const SignInSection = () => {
                     : "border-gray-300 focus-visible:ring-blue-500"
                     }`}
                   aria-invalid={errors.password ? "true" : "false"}
-                  aria-describedby={errors.password ? "password-error" : undefined}
+                  aria-describedby={
+                    errors.password ? "password-error" : undefined
+                  }
                 />
                 <button
                   type="button"
@@ -218,21 +234,5 @@ const SignInSection = () => {
   );
 };
 
-const DashboardPage = () => {
-  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    if (!isAuthenticated) {
-      navigate("/signin", { replace: true });
-    }
-  }, [isAuthenticated, navigate]);
-
-  return (
-    <div>
-      {/* Dashboard content goes here */}
-    </div>
-  );
-};
 
 export default SignInSection;

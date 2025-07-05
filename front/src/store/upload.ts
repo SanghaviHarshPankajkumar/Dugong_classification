@@ -1,6 +1,7 @@
-import { create } from 'zustand';
+import { create } from "zustand";
+import { persist } from "zustand/middleware";
 
-type UploadStatus = 'pending' | 'uploading' | 'success' | 'error';
+type UploadStatus = "pending" | "uploading" | "success" | "error";
 
 interface UploadFile {
   id: string;
@@ -11,48 +12,93 @@ interface UploadFile {
   error?: string;
 }
 
-type UploadState = {
+interface UploadState {
   files: UploadFile[];
   sessionId: string | null;
+  sessionStartTime: number | null;
   addFiles: (files: File[]) => void;
   setSessionId: (sessionId: string) => void;
+  resetSessionTimer: () => void;
   updateFileProgress: (id: string, progress: number) => void;
-  updateFileStatus: (id: string, status: UploadStatus, url?: string, error?: string) => void;
+  updateFileStatus: (
+    id: string,
+    status: UploadStatus,
+    url?: string,
+    error?: string
+  ) => void;
   clearFiles: () => void;
+  clearStore: () => void;
   getFileById: (id: string) => UploadFile | undefined;
-};
+}
 
-export const useUploadStore = create<UploadState>((set, get) => ({
-  files: [],
-  sessionId: null,
+export const useUploadStore = create<UploadState>()(
+  persist(
+    (set, get) => ({
+      files: [],
+      sessionId: null,
+      sessionStartTime: null,
 
-  addFiles: (newFiles) => set((state) => ({
-    files: [
-      ...state.files,
-      ...newFiles.map((file) => ({
-        id: crypto.randomUUID(),
-        file,
-        progress: 0,
-        status: 'pending' as UploadStatus
-      }))
-    ]
-  })),
+      addFiles: (newFiles: File[]) =>
+        set((state) => ({
+          files: [
+            ...state.files,
+            ...newFiles.map((file) => ({
+              id: crypto.randomUUID(),
+              file,
+              progress: 0,
+              status: "pending" as UploadStatus,
+            })),
+          ],
+        })),
 
-  setSessionId: (sessionId) => set({ sessionId }),
+      setSessionId: (sessionId: string) => {
+        set({
+          sessionId,
+          sessionStartTime: Date.now(),
+        });
+      },
 
-  updateFileProgress: (id, progress) => set((state) => ({
-    files: state.files.map((file) =>
-      file.id === id ? { ...file, progress } : file
-    )
-  })),
+      resetSessionTimer: () => {
+        const { sessionId } = get();
+        if (sessionId) {
+          set({
+            sessionStartTime: Date.now(),
+          });
+        }
+      },
 
-  updateFileStatus: (id, status, url, error) => set((state) => ({
-    files: state.files.map((file) =>
-      file.id === id ? { ...file, status, url, error } : file
-    )
-  })),
+      updateFileProgress: (id: string, progress: number) =>
+        set((state) => ({
+          files: state.files.map((file) =>
+            file.id === id ? { ...file, progress } : file
+          ),
+        })),
 
-  clearFiles: () => set({ files: [] }),
+      updateFileStatus: (
+        id: string,
+        status: UploadStatus,
+        url?: string,
+        error?: string
+      ) =>
+        set((state) => ({
+          files: state.files.map((file) =>
+            file.id === id ? { ...file, status, url, error } : file
+          ),
+        })),
 
-  getFileById: (id) => get().files.find((file) => file.id === id)
-}));
+      clearFiles: () => set({ files: [] }),
+
+      clearStore: () => {
+        set({
+          sessionId: null,
+          sessionStartTime: null,
+        });
+      },
+
+      getFileById: (id: string) => get().files.find((file) => file.id === id),
+    }),
+    {
+      name: "upload-store",
+    }
+  )
+);

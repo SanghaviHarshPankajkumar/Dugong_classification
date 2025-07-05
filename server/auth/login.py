@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 from pymongo import MongoClient
 from dotenv import load_dotenv
 import os
+import uuid
 
 # Load environment variables
 load_dotenv()
@@ -36,6 +37,9 @@ class LoginRequest(BaseModel):
 class TokenResponse(BaseModel):
     access_token: str
     token_type: str
+    session_id: str
+    username :str
+    email: str
 
 # Token creation function
 def create_token(data: dict, expires_delta: timedelta):
@@ -51,7 +55,7 @@ def login(request: LoginRequest):
     print("Login request received:", request.email)
 
     user = user_collection.find_one({"email": request.email})
-
+    print("User found:", user)
     if not user:
         raise HTTPException(status_code=401, detail="Email not found")
 
@@ -68,12 +72,21 @@ def login(request: LoginRequest):
     if not password_valid:
         raise HTTPException(status_code=401, detail="Incorrect password")
 
+
+    username = user.get("username", "")
+    useremail = user.get("email", "")
+    # --- SESSION ID LOGIC ---
+    session_id = user.get("session_id")
+    if not session_id:
+        session_id = str(uuid.uuid4())
+        user_collection.update_one({"email": request.email}, {"$set": {"session_id": session_id}})
+
     token = create_token(
         {"sub": user["email"]},
         timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     )
 
-    return {"access_token": token, "token_type": "bearer"}
+    return {"access_token": token, "token_type": "bearer", "session_id": session_id, "email" : useremail, "username": username}
 
 # Include the router in the app
 app.include_router(router)

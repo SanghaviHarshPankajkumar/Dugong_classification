@@ -4,4 +4,4 @@ from typing import Literal
 class MoveImageRequest(BaseModel):
     sessionId: str
     imageName: str
-    targetClass: Literal["Feeding", "Resting"] 
+    targetClass: Literal["feeding", "resting"] 

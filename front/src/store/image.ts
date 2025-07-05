@@ -1,5 +1,5 @@
-import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { create } from "zustand";
+import { persist } from "zustand/middleware";
 
 type ImageState = {
   currentImage: number;
@@ -10,11 +10,12 @@ type ImageState = {
   handlePrevious: () => void;
   handleNext: () => void;
   getCurrentImageData: () => any | null;
+  clearStore: () => void;
 };
 
 export const useImageStore = create<
   ImageState,
-  [['zustand/persist', Partial<ImageState>]]
+  [["zustand/persist", Partial<ImageState>]]
 >(
   persist(
     (set, get) => ({
@@ -46,9 +47,16 @@ export const useImageStore = create<
         if (!state.apiResponse?.results || state.currentImage < 1) return null;
         return state.apiResponse.results[state.currentImage - 1];
       },
+
+      clearStore: () =>
+        set({
+          currentImage: 1,
+          apiResponse: null,
+          totalImages: 0,
+        }),
     }),
     {
-      name: 'image-storage',
+      name: "image-storage",
     }
   )
 );

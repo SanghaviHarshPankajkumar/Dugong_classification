@@ -1,8 +1,4 @@
-"""
-FastAPI backend for the Dugong Classification System.
-Provides REST API endpoints and handles CORS, file uploads, OAuth login, and background tasks.
-"""
-
+# main.py
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.sessions import SessionMiddleware
@@ -29,7 +25,6 @@ app_logger = setup_logger("app", "logs/app.log")
 # Initialize FastAPI app
 app = FastAPI(title="YOLO Image Uploader")
 app_logger.info("App initialized")
-app.include_router(login_router)
 
 # Serve uploads directory as static files
 app.mount(f"/{BASE_DIR.name}", StaticFiles(directory=BASE_DIR), name="uploads")
@@ -52,10 +47,19 @@ os.makedirs(BASE_DIR, exist_ok=True)
 # Background task: periodically clean expired session folders
 @app.on_event("startup")
 async def startup_event():
-    app_logger.info("Starting cleanup background task")
-    asyncio.create_task(cleanup_expired_sessions())
+    app_logger.info("Starting session-based cleanup background task")
+    # Start cleanup with 5-minute intervals and 15-minute session expiry
+    asyncio.create_task(cleanup_expired_sessions(interval_seconds=300, expiry_minutes=15))
 
 # Register routers
 app.include_router(api_router, prefix="/api")     # Main API
 # app.include_router(auth_router)                   # Google OAuth
 app.include_router(login_router)                  # Email/Password Login
+
+@app.get("/")
+async def root():
+    return {"message": "Dugong Taxonomy API is running"}
+
+@app.get("/health")
+async def health_check():
+    return {"status": "healthy", "timestamp": "2025-01-01T00:00:00Z"}
