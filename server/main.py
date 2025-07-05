@@ -22,6 +22,10 @@ SECRET_KEY = os.getenv("SECRET_KEY", "fallback-secret")
 # App logger
 app_logger = setup_logger("app", "logs/app.log")
 
+# Ensure base directories exist BEFORE initializing FastAPI
+os.makedirs(BASE_DIR, exist_ok=True)
+os.makedirs("logs", exist_ok=True)
+
 # Initialize FastAPI app
 app = FastAPI(title="YOLO Image Uploader")
 app_logger.info("App initialized")
@@ -40,9 +44,6 @@ app.add_middleware(
 
 # ✅ Add session middleware required for OAuth login
 app.add_middleware(SessionMiddleware, secret_key=SECRET_KEY)
-
-# Ensure base directories exist
-os.makedirs(BASE_DIR, exist_ok=True)
 
 # Background task: periodically clean expired session folders
 @app.on_event("startup")

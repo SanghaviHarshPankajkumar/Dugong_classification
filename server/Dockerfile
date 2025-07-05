@@ -24,15 +24,17 @@ RUN apt-get update && apt-get install -y \
 COPY server/ /app/server/
 COPY model/ /app/model/
 
-# Install Python dependencies
-RUN pip install --upgrade pip && \
-    pip install --no-cache-dir -r /app/server/requirements.txt
 
-# Run the user creation script at build or startup
-RUN python /app/server/create_user.py
+# Install Python dependencies
+RUN pip install --upgrade pip
+RUN pip install --no-cache-dir -r /app/server/requirements.txt
+
+# Copy startup script and make it executable
+COPY server/startup.sh /app/startup.sh
+RUN chmod +x /app/startup.sh
 
 # Expose port
 EXPOSE 8000
 
-# Start the FastAPI app
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--app-dir", "/app/server"]
+# Start with the startup script
+CMD ["/app/startup.sh"]
