@@ -27,13 +27,21 @@ const DashboardPage = () => {
 
   const [markedPoorImages, setMarkedPoorImages] = useState<string[]>([]);
   const [isPolling, setIsPolling] = useState(false);
-  const [lastImageCount, setLastImageCount] = useState(0);
+  // const [lastImageCount, setLastImageCount] = useState(0);
 
   useEffect(() => {
     if (authSessionId && authSessionId !== uploadSessionId) {
       setUploadSessionId(authSessionId);
     }
   }, [authSessionId, uploadSessionId, setUploadSessionId]);
+
+  type SessionFile = {
+    filename: string;
+    createdAt?: string;
+    dugongCount?: number;
+    calfCount?: number;
+    imageClass?: string;
+  };
 
   // Fetch full session metadata and update image store
   const fetchSessionMetadata = async (sessionId: string) => {
@@ -43,7 +51,7 @@ const DashboardPage = () => {
       );
       if (response.data && response.data.success) {
         setApiResponse({
-          results: response.data.files.map((file: any, idx: number) => ({
+          results: response.data.files.map((file: SessionFile, idx: number) => ({
             imageId: idx,
             imageUrl: `/uploads/${sessionId}/images/${file.filename}`,
             createdAt: file.createdAt || response.data.lastActivity || "",
@@ -52,7 +60,7 @@ const DashboardPage = () => {
             imageClass: file.imageClass ?? "N/A",
           })),
         });
-        setLastImageCount(response.data.files.length);
+        // setLastImageCount(response.data.files.length);
         return response.data.files.length;
       }
     } catch (error) {
@@ -89,7 +97,7 @@ const DashboardPage = () => {
   };
 
   // After upload, backfill detection results and poll for all images
-  const handleImageUpload = async (response: any) => {
+  const handleImageUpload = async () => {
     if (uploadSessionId) {
       try {
         await axios.post(

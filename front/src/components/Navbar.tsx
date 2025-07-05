@@ -50,7 +50,7 @@ const Navbar: React.FC<NavbarProps> = ({
   const { sessionId, sessionStartTime } = useUploadStore();
   const { username: userName, email: userEmail } = useAuthStore();
 
-  const handleLogout = async () => {
+  const handleLogout = React.useCallback(async () => {
     try {
       // Call backend cleanup endpoint before logging out
       if (userEmail && sessionId) {
@@ -73,10 +73,11 @@ const Navbar: React.FC<NavbarProps> = ({
     localStorage.removeItem("upload-store");
     localStorage.removeItem("image-storage");
     navigate("/");
-  };
-  const handleSessionExpiry = () => {
-    handleLogout()
-  };
+  }, [userEmail, sessionId, navigate]);
+
+  const handleSessionExpiry = React.useCallback(() => {
+    handleLogout();
+  }, [handleLogout]);
 
   // Update session timer every second
   useEffect(() => {
@@ -176,7 +177,7 @@ const Navbar: React.FC<NavbarProps> = ({
                   className="cursor-pointer relative h-10 w-10 p-0 rounded-full"
                 >
                   <div className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-500 to-cyan-500 flex items-center justify-center text-white font-semibold text-base shadow-md">
-                    {getInitials(userName)}
+                    {userName && getInitials(userName)}
                   </div>
                 </Button>
               </DropdownMenuTrigger>

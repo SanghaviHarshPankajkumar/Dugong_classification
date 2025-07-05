@@ -1,8 +1,12 @@
 import { Fish, Waves, Upload, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import ImageUploadDialog from "./ImageUploadDialog";
+import ImageUploadDialog from "./imageUploadDialog";
 
-const DashboardHeader = ({ onImageUpload }) => {
+interface DashboardHeaderProps {
+    onImageUpload: (response: unknown) => void;
+}
+
+const DashboardHeader = ({ onImageUpload }: DashboardHeaderProps) => {
     return (
         <div className="flex items-center justify-between mb-8">
             <div className="flex items-center gap-4">

@@ -22,7 +22,7 @@ interface ImageFile {
 }
 
 interface ImageUploadDialogProps {
-  onImageUploaded?: (response: any) => void;
+  onImageUploaded?: (response: unknown) => void;
   children: ReactNode;
 }
 
@@ -155,11 +155,10 @@ const ImageUploadDialog = ({
         <div className="space-y-6">
           {/* Upload Area */}
           <div
-            className={`relative border-2 border-dashed rounded-xl p-12 text-center transition-all duration-300 ${
-              dragActive
-                ? "border-blue-500 bg-gradient-to-br from-blue-50 to-teal-50 scale-105"
-                : "border-gray-300 hover:border-blue-400 bg-gradient-to-br from-gray-50 to-blue-50"
-            }`}
+            className={`relative border-2 border-dashed rounded-xl p-12 text-center transition-all duration-300 ${dragActive
+              ? "border-blue-500 bg-gradient-to-br from-blue-50 to-teal-50 scale-105"
+              : "border-gray-300 hover:border-blue-400 bg-gradient-to-br from-gray-50 to-blue-50"
+              }`}
             onDragEnter={handleDrag}
             onDragLeave={handleDrag}
             onDragOver={handleDrag}

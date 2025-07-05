@@ -4,13 +4,23 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
 
+interface ImageViewerProps {
+    currentImage: number;
+    totalImages: number;
+    currentImageData: {
+        imageUrl?: string;
+    } | null;
+    onPrevious: () => void;
+    onNext: () => void;
+}
+
 const ImageViewer = ({
     currentImage,
     totalImages,
     currentImageData,
     onPrevious,
     onNext
-}: any) => {
+}: ImageViewerProps) => {
     return (
         <Card className="border-0 shadow-2xl backdrop-blur-md bg-gradient-to-br from-blue-400 via-teal-500 to-blue-600">
             <CardHeader className="pb-4">

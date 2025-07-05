@@ -4,8 +4,17 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useUploadStore } from "@/store/upload";
 
+interface ImageData {
+  imageId: string;
+  imageUrl: string;
+  dugongCount: number;
+  calfCount: number;
+  imageClass?: string;
+  createdAt?: string;
+}
+
 interface ResultsSidebarProps {
-  currentImageData: any;
+  currentImageData: ImageData;
   markedPoorImages: string[];
   onMarkPoor: (imageId: string) => void;
 }
@@ -123,7 +132,7 @@ const ResultsSidebar = ({
           <div className="flex justify-between items-center">
             <span className="text-sm font-medium text-muted-foreground">Captured Date</span>
             <Badge variant="secondary">
-              {extractFormattedDate(currentImageData?.imageUrl.split("/").pop())}
+              {extractFormattedDate(currentImageData?.imageUrl.split("/").pop() || "")}
             </Badge>
           </div>
           <div className="flex justify-between items-center">

@@ -1,5 +1,5 @@
 
-import { Fish, Eye, Shield, BarChart3, MapPin } from "lucide-react";
+import { Fish } from "lucide-react";
 
 const HeroSection = () => {
 

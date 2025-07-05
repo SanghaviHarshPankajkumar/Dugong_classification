@@ -8,7 +8,7 @@ import ImageUploadDialog from "./imageUploadDialog";
 const EmptyState = ({
   onImageUpload,
 }: {
-  onImageUpload: (response: any) => void;
+  onImageUpload: (response: unknown) => void;
 }) => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-400 via-teal-500 to-blue-600 relative overflow-hidden">
