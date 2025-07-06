@@ -55,7 +55,7 @@ const Navbar: React.FC<NavbarProps> = ({
       // Call backend cleanup endpoint before logging out
       if (userEmail && sessionId) {
         await axios.post(
-          `http://localhost:8000/api/cleanup-sessions/${userEmail}?session_id=${sessionId}`
+          `/api/cleanup-sessions/${userEmail}?session_id=${sessionId}`
         );
       }
     } catch (err) {

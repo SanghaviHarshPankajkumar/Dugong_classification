@@ -4,14 +4,14 @@ services:
   frontend:
     build:
       context: .
-      dockerfile: front/Dockerfile
+      dockerfile: Dockerfile
     ports:
       - "3000:80"
 
   backend:
     build:
       context: .
-      dockerfile: server/Dockerfile
+      dockerfile: Dockerfile
     ports:
       - "8000:8000"
     depends_on:

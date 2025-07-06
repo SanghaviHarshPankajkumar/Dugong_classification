@@ -27,7 +27,7 @@ COPY model/ /app/model/
 
 # Install Python dependencies
 RUN pip install --upgrade pip
-RUN pip install --no-cache-dir -r /app/server/requirements.txt
+RUN pip install -r /app/server/requirements.txt
 
 # Copy startup script and make it executable
 COPY server/startup.sh /app/startup.sh

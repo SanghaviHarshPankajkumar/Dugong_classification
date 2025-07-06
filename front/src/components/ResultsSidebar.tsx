@@ -63,7 +63,7 @@ const ResultsSidebar = ({
 
       try {
         const response = await fetch(
-          "http://localhost:8000/api/move-to-false-positive/",
+          "/api/move-to-false-positive/",
           {
             method: "POST",
             headers: {

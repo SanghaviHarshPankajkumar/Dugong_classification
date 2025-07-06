@@ -7,7 +7,8 @@ try:
     pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
     hashed = pwd_context.hash("secret123")
 
-    client = MongoClient("mongodb://mongo:27017")
+    #client = MongoClient("mongodb://localhost:27017")
+    client = MongoClient("mongodb+srv://dugongmonitoring:6nzCWvI0pGE4xTq9@cluster0.bbqoo1e.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0")  # Use service name for Docker
     db = client["DugongMonitoring"]
     users = db["users"]
     

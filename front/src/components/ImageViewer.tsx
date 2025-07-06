@@ -59,7 +59,7 @@ const ImageViewer = ({
                 <div className="relative overflow-hidden rounded-xl border-2 border-white/30 bg-white/10 backdrop-blur-sm inline-block shadow-lg">
                     {currentImageData && (
                         <img
-                            src={currentImageData?.imageUrl ? `http://localhost:8000${currentImageData.imageUrl}` : ''}
+                            src={currentImageData?.imageUrl ? `${currentImageData.imageUrl}` : ''}
                             alt="Dugong monitoring capture"
                             className="w-auto h-auto max-w-full max-h-full object-contain transition-transform duration-300 hover:scale-105"
                         />
