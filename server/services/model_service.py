@@ -15,8 +15,8 @@ import os
 import cv2
 
 logger = setup_logger("model_service", "logs/model_service.log")
-model = YOLO(MODEL_PATH)
-classification_model = YOLO(CLASSIFICATION_MODEL_PATH)
+model = YOLO("MLmodel.pt")
+classification_model = YOLO("classification_model.pt")
 
 def fully_dynamic_nms(preds, iou_min=0.1, iou_max=0.6):
     from ultralytics.engine.results import Boxes
