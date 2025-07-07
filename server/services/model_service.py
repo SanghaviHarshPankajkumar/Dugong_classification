@@ -15,8 +15,21 @@ import os
 import cv2
 
 logger = setup_logger("model_service", "logs/model_service.log")
-model = YOLO("https://storage.googleapis.com/dugong_models/MLmodel.pt")
-classification_model = YOLO("https://storage.googleapis.com/dugong_models/classification_model.pt")
+url = "https://storage.googleapis.com/dugong_models/best.pt"
+url = "https://storage.googleapis.com/dugong_models/classification_model.pt"
+
+response = requests.get(url)
+# Save to disk
+with open("MLmodel.pt", "wb") as f:
+    f.write(response.content)
+model = YOLO("MLmodel.pt")
+
+response = requests.get(url)
+# Save to disk
+with open("classification_model.pt", "wb") as f:
+    f.write(response.content)
+    
+classification_model = YOLO("classification_model.pt")
 
 def fully_dynamic_nms(preds, iou_min=0.1, iou_max=0.6):
     from ultralytics.engine.results import Boxes
