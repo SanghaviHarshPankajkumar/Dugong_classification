@@ -8,6 +8,7 @@ from ultralytics import YOLO
 from core.config import MODEL_PATH, BASE_DIR,CLASSIFICATION_MODEL_PATH
 from core.logger import setup_logger
 from typing import List, Tuple
+import requests
 
 import numpy as np
 import torch
