@@ -34,92 +34,89 @@ async def upload_multiple(
     Upload multiple files, save them under a session folder, run YOLO model, and update session metadata.
     Updates session activity timestamp for timer reset.
     """
-    try:
-        session_folder_name = f"{session_id}"
-        session_folder = BASE_DIR / session_folder_name
-        session_folder.mkdir(parents=True, exist_ok=True)
-        results: List[ImageResult] = []
-        new_file_results = []
-        batch_files = files
-        batch_contents = []
-        saved_paths = []
-        for file in batch_files:
-            if file.content_type and file.content_type.startswith("image/"):
-                contents = await file.read()
-                validate_file(file, contents)
-                saved_path = save_file(file, contents, session_folder_name)
-                batch_contents.append((file, contents))
-                saved_paths.append(saved_path)
-        batch_results = run_model_on_images(saved_paths, session_folder_name)
-        for idx, (saved_path, result) in enumerate(zip(saved_paths, batch_results)):
-            dugong_count, calf_count, image_class, image_with_boxes_path = result
-            file_result = {
-                "filename": saved_path.name,
-                "path": str(saved_path.relative_to(BASE_DIR)),
-                "dugongCount": dugong_count,
-                "calfCount": calf_count,
-                "imageClass": image_class,
-                "createdAt": datetime.now().isoformat()
-            }
-            new_file_results.append(file_result)
-            results.append(ImageResult(
-                imageId=idx,
-                imageUrl=f"/{BASE_DIR.name}/{session_folder_name}/images/{saved_path.name}",
-                dugongCount=dugong_count,
-                calfCount=calf_count,
-                imageClass=image_class,
-                createdAt=file_result["createdAt"]
-            ))
-        # Update or create session metadata
-        metadata_file = session_folder / "session_metadata.json"
-        merged_files = []
-        if metadata_file.exists():
-            with open(metadata_file, 'r') as f:
-                metadata = json.load(f)
-            old_files = metadata.get('files', [])
-            # Build a dict of new results for quick lookup
-            new_files_dict = {f['filename']: f for f in new_file_results}
-            for old_file in old_files:
-                fname = old_file.get('filename')
-                if fname in new_files_dict:
-                    # Overwrite with new detection result
-                    merged_files.append(new_files_dict[fname])
-                else:
-                    # If old file lacks detection results, add default values
-                    merged_files.append({
-                        **old_file,
-                        "dugongCount": old_file.get("dugongCount", 0),
-                        "calfCount": old_file.get("calfCount", 0),
-                        "imageClass": old_file.get("imageClass", "N/A"),
-                        "createdAt": old_file.get("createdAt", datetime.now().isoformat())
-                    })
-            # Add any new files not in old_files
-            for fname, new_file in new_files_dict.items():
-                if not any(f.get('filename') == fname for f in old_files):
-                    merged_files.append(new_file)
-        else:
-            merged_files = new_file_results
-        metadata = {
-            'session_id': session_id,
-            'created_at': datetime.utcnow().isoformat(),
-            'last_activity': datetime.utcnow().isoformat(),
-            'files': merged_files,
-            'file_count': len(merged_files)
+
+    session_folder_name = f"{session_id}"
+    session_folder = BASE_DIR / session_folder_name
+    session_folder.mkdir(parents=True, exist_ok=True)
+    results: List[ImageResult] = []
+    new_file_results = []
+    batch_files = files
+    batch_contents = []
+    saved_paths = []
+    for file in batch_files:
+        if file.content_type and file.content_type.startswith("image/"):
+            contents = await file.read()
+            validate_file(file, contents)
+            saved_path = save_file(file, contents, session_folder_name)
+            batch_contents.append((file, contents))
+            saved_paths.append(saved_path)
+    batch_results = run_model_on_images(saved_paths, session_folder_name)
+    for idx, (saved_path, result) in enumerate(zip(saved_paths, batch_results)):
+        dugong_count, calf_count, image_class, image_with_boxes_path = result
+        file_result = {
+            "filename": saved_path.name,
+            "path": str(saved_path.relative_to(BASE_DIR)),
+            "dugongCount": dugong_count,
+            "calfCount": calf_count,
+            "imageClass": image_class,
+            "createdAt": datetime.now().isoformat()
         }
-        with open(metadata_file, 'w') as f:
-            json.dump(metadata, f, indent=2)
-        logger.info(f"Updated session: {session_id} with {len(merged_files)} total files")
-        return {
-            "success": True,
-            "sessionId": session_id,
-            "results": results,
-            "filesUploaded": len(new_file_results),
-            "files": new_file_results,
-            "message": f"Successfully uploaded and processed {len(new_file_results)} images"
-        }
-    except Exception as e:
-        logger.error(f"Upload failed: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Upload failed: {str(e)}")
+        new_file_results.append(file_result)
+        results.append(ImageResult(
+            imageId=idx,
+            imageUrl=f"/{BASE_DIR.name}/{session_folder_name}/images/{saved_path.name}",
+            dugongCount=dugong_count,
+            calfCount=calf_count,
+            imageClass=image_class,
+            createdAt=file_result["createdAt"]
+        ))
+    # Update or create session metadata
+    metadata_file = session_folder / "session_metadata.json"
+    merged_files = []
+    if metadata_file.exists():
+        with open(metadata_file, 'r') as f:
+            metadata = json.load(f)
+        old_files = metadata.get('files', [])
+        # Build a dict of new results for quick lookup
+        new_files_dict = {f['filename']: f for f in new_file_results}
+        for old_file in old_files:
+            fname = old_file.get('filename')
+            if fname in new_files_dict:
+                # Overwrite with new detection result
+                merged_files.append(new_files_dict[fname])
+            else:
+                # If old file lacks detection results, add default values
+                merged_files.append({
+                    **old_file,
+                    "dugongCount": old_file.get("dugongCount", 0),
+                    "calfCount": old_file.get("calfCount", 0),
+                    "imageClass": old_file.get("imageClass", "N/A"),
+                    "createdAt": old_file.get("createdAt", datetime.now().isoformat())
+                })
+        # Add any new files not in old_files
+        for fname, new_file in new_files_dict.items():
+            if not any(f.get('filename') == fname for f in old_files):
+                merged_files.append(new_file)
+    else:
+        merged_files = new_file_results
+    metadata = {
+        'session_id': session_id,
+        'created_at': datetime.utcnow().isoformat(),
+        'last_activity': datetime.utcnow().isoformat(),
+        'files': merged_files,
+        'file_count': len(merged_files)
+    }
+    with open(metadata_file, 'w') as f:
+        json.dump(metadata, f, indent=2)
+    logger.info(f"Updated session: {session_id} with {len(merged_files)} total files")
+    return {
+        "success": True,
+        "sessionId": session_id,
+        "results": results,
+        "filesUploaded": len(new_file_results),
+        "files": new_file_results,
+        "message": f"Successfully uploaded and processed {len(new_file_results)} images"
+    }
 
 
 # @router.post("/reset-session-timer/{session_id}")
