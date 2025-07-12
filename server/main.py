@@ -23,7 +23,7 @@ SECRET_KEY = os.getenv("SECRET_KEY", "fallback-secret")
 app_logger = setup_logger("app", "logs/app.log")
 
 # Ensure base directories exist BEFORE initializing FastAPI
-os.makedirs(BASE_DIR, exist_ok=True)
+BASE_DIR.mkdir(parents=True, exist_ok=True)
 os.makedirs("logs", exist_ok=True)
 
 # Initialize FastAPI app
