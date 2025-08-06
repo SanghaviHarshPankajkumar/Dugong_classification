@@ -17,7 +17,6 @@ import cv2
 
 logger = setup_logger("model_service", "logs/model_service.log")
 url = "https://storage.googleapis.com/dugong_models/best.pt"
-url = "https://storage.googleapis.com/dugong_models/classification_model.pt"
 
 response = requests.get(url)
 # Save to disk
@@ -25,6 +24,7 @@ with open("MLmodel.pt", "wb") as f:
     f.write(response.content)
 model = YOLO("MLmodel.pt")
 
+url = "https://storage.googleapis.com/dugong_models/classification_model.pt"
 response = requests.get(url)
 # Save to disk
 with open("classification_model.pt", "wb") as f:
