@@ -6,7 +6,7 @@ COPY front/ /app/
 RUN npm install && npm run build
 
 # Stage 2: Backend + Frontend + MongoDB + Nginx
-FROM python:3.9-buster
+FROM python:3.9-slim
 
 # Install MongoDB
 # RUN apt-get update && \
