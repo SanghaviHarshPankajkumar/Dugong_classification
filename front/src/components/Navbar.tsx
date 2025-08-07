@@ -71,7 +71,7 @@ const Navbar: React.FC<NavbarProps> = ({ imageCount = 0 }) => {
     localStorage.removeItem("upload-store");
     localStorage.removeItem("image-storage");
     navigate("/");
-  }, [userEmail, sessionId, navigate, API_URL]);
+  }, [userEmail, sessionId, navigate]);
 
   const handleSessionExpiry = React.useCallback(() => {
     handleLogout();
