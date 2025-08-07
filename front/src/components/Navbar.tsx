@@ -1,6 +1,7 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 //Navbar.tsx
 import React, { useState, useEffect } from "react";
-import { LogOut, Menu, Upload, Eye, Clock } from "lucide-react";
+import { LogOut, Eye, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -39,27 +40,24 @@ function formatTimeRemaining(seconds: number): string {
   return `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`;
 }
 
-const Navbar: React.FC<NavbarProps> = ({
-  imageCount = 0,
-  onUploadClick,
-
-}) => {
+const Navbar: React.FC<NavbarProps> = ({ imageCount = 0 }) => {
   const navigate = useNavigate();
   const [sessionTimeLeft, setSessionTimeLeft] = useState(15 * 60); // 15 minutes in seconds
   const [isSessionExpired, setIsSessionExpired] = useState(false);
   const { sessionId, sessionStartTime } = useUploadStore();
   const { username: userName, email: userEmail } = useAuthStore();
 
+
   const handleLogout = React.useCallback(async () => {
     try {
       // Call backend cleanup endpoint before logging out
       if (userEmail && sessionId) {
         await axios.post(
-          `/api/cleanup-sessions/${userEmail}?session_id=${sessionId}`
+          `/cleanup-sessions/${userEmail}?session_id=${sessionId}`
         );
       }
     } catch (err) {
-      console.error("Cleanup on logout failed", err);
+      // console.error("Cleanup on logout failed", err);
     }
     // Clear all stores and localStorage
     Cookies.remove("access_token");
@@ -73,7 +71,7 @@ const Navbar: React.FC<NavbarProps> = ({
     localStorage.removeItem("upload-store");
     localStorage.removeItem("image-storage");
     navigate("/");
-  }, [userEmail, sessionId, navigate]);
+  }, [userEmail, sessionId, navigate, API_URL]);
 
   const handleSessionExpiry = React.useCallback(() => {
     handleLogout();
@@ -95,10 +93,7 @@ const Navbar: React.FC<NavbarProps> = ({
       }
     }, 1000);
     return () => clearInterval(timer);
-
   }, [sessionStartTime, isSessionExpired, handleSessionExpiry]);
-
-
 
   // Get timer color based on time remaining
   const getTimerColor = () => {
@@ -109,61 +104,38 @@ const Navbar: React.FC<NavbarProps> = ({
 
   return (
     <nav className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-sm">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+        {/* Main navbar row */}
+        <div className="flex items-center justify-between h-14 sm:h-16">
           {/* Left Section - Logo & Brand */}
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-cyan-600 rounded-lg flex items-center justify-center">
-                <Eye className="w-4 h-4 text-white" />
-              </div>
-              <div className="hidden sm:block">
-                <h1 className="text-xl font-bold bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent">
-                  Dugong Taxanomy
-                </h1>
-              </div>
+          <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+            <div className="w-7 h-7 sm:w-8 sm:h-8 bg-gradient-to-r from-blue-600 to-cyan-600 rounded-lg flex items-center justify-center">
+              <Eye className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" />
             </div>
+            <h1 className="text-lg sm:text-xl font-bold bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent">
+              <span className="hidden sm:inline">Dugong Detector</span>
+              <span className="sm:hidden">Dugong</span>
+            </h1>
           </div>
 
-          {/* Center Section - Search & Status */}
-          <div className="hidden lg:flex items-center gap-4">
-            <div className="relative">
-              {/* <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
-              <input
-                type="text"
-                placeholder="Search images..."
-                className="pl-10 pr-4 py-2 w-64 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-slate-50"
-              /> */}
-            </div>
-
-            {/* Status Badge */}
+          {/* Right Section - Status, Timer, and User Menu */}
+          <div className="flex items-center gap-2 sm:gap-3">
+            {/* Status Badge - Hidden on very small screens */}
             {imageCount > 0 && (
-              <div className="flex items-center gap-2 px-3 py-1 bg-green-50 border border-green-200 rounded-full">
-                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                <span className="text-sm font-medium text-green-700">
-                  {imageCount} Active
+              <div className="hidden xs:flex items-center gap-1.5 px-2 sm:px-3 py-1 bg-green-50 border border-green-200 rounded-full">
+                <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-green-500 rounded-full animate-pulse"></div>
+                <span className="text-xs sm:text-sm font-medium text-green-700">
+                  <span className="hidden sm:inline">{imageCount} Active</span>
+                  <span className="sm:hidden">{imageCount}</span>
                 </span>
               </div>
             )}
 
-            {/* Session Timer */}
+            {/* Session Timer - Compact on mobile */}
             {sessionId && sessionStartTime && (
-              <div className="flex items-center gap-2 px-3 py-1 bg-slate-50 border border-slate-200 rounded-full">
-                <Clock className="w-4 h-4 text-slate-600" />
-                <span className={`text-sm font-medium ${getTimerColor()}`}>
-                  {formatTimeRemaining(sessionTimeLeft)}
-                </span>
-              </div>
-            )}
-          </div>
-
-          {/* Right Section - Actions & Profile */}
-          <div className="flex items-center gap-3">
-            {/* Mobile Session Timer */}
-            {sessionId && sessionStartTime && (
-              <div className="lg:hidden flex items-center gap-1 px-2 py-1 bg-slate-50 border border-slate-200 rounded-full">
-                <Clock className="w-3 h-3 text-slate-600" />
-                <span className={`text-xs font-medium ${getTimerColor()}`}>
+              <div className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1 bg-slate-50 border border-slate-200 rounded-full">
+                <Clock className="w-3 h-3 sm:w-4 sm:h-4 text-slate-600 flex-shrink-0" />
+                <span className={`text-xs sm:text-sm font-medium ${getTimerColor()} whitespace-nowrap`}>
                   {formatTimeRemaining(sessionTimeLeft)}
                 </span>
               </div>
@@ -174,9 +146,9 @@ const Navbar: React.FC<NavbarProps> = ({
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="ghost"
-                  className="cursor-pointer relative h-10 w-10 p-0 rounded-full"
+                  className="cursor-pointer relative h-8 w-8 sm:h-10 sm:w-10 p-0 rounded-full"
                 >
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-500 to-cyan-500 flex items-center justify-center text-white font-semibold text-base shadow-md">
+                  <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-r from-blue-500 to-cyan-500 flex items-center justify-center text-white font-semibold text-sm sm:text-base shadow-md">
                     {userName && getInitials(userName)}
                   </div>
                 </Button>
@@ -193,7 +165,6 @@ const Navbar: React.FC<NavbarProps> = ({
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                {/* Session Info in Dropdown */}
                 {sessionId && sessionStartTime && (
                   <>
                     <DropdownMenuItem disabled>
@@ -219,25 +190,22 @@ const Navbar: React.FC<NavbarProps> = ({
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-
-            {/* Mobile Menu */}
-            <div className="md:hidden">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="sm">
-                    <Menu className="w-4 h-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-56" align="end">
-                  <DropdownMenuItem className="gap-2" onClick={onUploadClick}>
-                    <Upload className="w-4 h-4" />
-                    Upload Images
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
           </div>
         </div>
+
+        {/* Mobile-only second row for status when needed */}
+        {imageCount > 0 && (
+          <div className="xs:hidden pb-2">
+            <div className="flex items-center justify-center">
+              <div className="flex items-center gap-1.5 px-2 py-1 bg-green-50 border border-green-200 rounded-full">
+                <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
+                <span className="text-xs font-medium text-green-700">
+                  {imageCount} Active
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </nav>
   );

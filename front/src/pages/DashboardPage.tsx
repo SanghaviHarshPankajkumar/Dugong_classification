@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import Navbar from "@/components/Navbar";
 import AnimatedBackground from "../components/AnimatedBackground";
 import EmptyState from "../components/EmptyState";
@@ -41,30 +42,33 @@ const DashboardPage = () => {
     dugongCount?: number;
     calfCount?: number;
     imageClass?: string;
+    imageUrl?: string;
   };
 
   // Fetch full session metadata and update image store
   const fetchSessionMetadata = async (sessionId: string) => {
     try {
       const response = await axios.get(
-        `/api/session-status/${sessionId}`
+        `/session-status/${sessionId}`
       );
       if (response.data && response.data.success) {
         setApiResponse({
-          results: response.data.files.map((file: SessionFile, idx: number) => ({
-            imageId: idx,
-            imageUrl: `/uploads/${sessionId}/images/${file.filename}`,
-            createdAt: file.createdAt || response.data.lastActivity || "",
-            dugongCount: file.dugongCount ?? 0,
-            calfCount: file.calfCount ?? 0,
-            imageClass: file.imageClass ?? "N/A",
-          })),
+          results: response.data.files.map(
+            (file: SessionFile, idx: number) => ({
+              imageId: idx,
+              imageUrl: file.imageUrl || "",
+              createdAt: file.createdAt || response.data.lastActivity || "",
+              dugongCount: file.dugongCount ?? 0,
+              calfCount: file.calfCount ?? 0,
+              imageClass: file.imageClass ?? "N/A",
+            })
+          ),
         });
         // setLastImageCount(response.data.files.length);
         return response.data.files.length;
       }
     } catch (error) {
-      console.error("Failed to fetch session metadata", error);
+      // console.error("Failed to fetch session metadata", error);
     }
     return 0;
   };
@@ -101,10 +105,10 @@ const DashboardPage = () => {
     if (uploadSessionId) {
       try {
         await axios.post(
-          `/api/backfill-detections/${uploadSessionId}`
+          `/backfill-detections/${uploadSessionId}`
         );
       } catch (err) {
-        console.error("Failed to backfill detection results", err);
+        // console.error("Failed to backfill detection results", err);
       }
       // Fetch once, then poll for new images
       const initialCount = await fetchSessionMetadata(uploadSessionId);

@@ -1,5 +1,5 @@
 
-import { Fish } from "lucide-react";
+
 
 const HeroSection = () => {
 
@@ -33,8 +33,13 @@ const HeroSection = () => {
                 {/* Enhanced Logo Section */}
                 <div className="relative mb-12">
                     <div className="relative group">
-                        <div className="w-40 h-40 mx-auto bg-white/15 backdrop-blur-xl rounded-3xl flex items-center justify-center border border-white/20 shadow-2xl transform transition-all duration-500 group-hover:scale-105 group-hover:rotate-3">
-                            <Fish className="w-20 h-20 text-white drop-shadow-lg" />
+                        <div className="w-30 h-30 mx-auto bg-white/80 backdrop-blur-xl rounded-3xl flex items-center justify-center border border-white/20 shadow-2xl transform transition-all duration-500 group-hover:scale-105 group-hover:rotate-3">
+                            <img
+                                src="/dugong.png"
+                                alt="Dugong"
+                                className="w-24 h-24 object-contain drop-shadow-lg "
+                            />
+
                         </div>
                     </div>
                 </div>
@@ -59,7 +64,7 @@ const HeroSection = () => {
                                 <span className="inline-block text-2xl md:text-3xl lg:text-4xl">
                                     <span className="text-yellow-300 font-extrabold animate-pulse">(</span>
                                     <span className="bg-gradient-to-r from-yellow-200 via-orange-200 to-yellow-300 bg-clip-text text-transparent font-bold">
-                                        Dugong Taxonomy
+                                        Dugong
                                     </span>
                                     <span className="text-yellow-300 font-extrabold animate-pulse">)</span>
                                 </span>

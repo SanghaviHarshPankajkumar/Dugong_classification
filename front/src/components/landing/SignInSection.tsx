@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -62,7 +63,7 @@ const SignInSection = () => {
         // Ensure email is sent as lowercase
         const payload = { ...data, email: data.email.toLowerCase() };
         const response = await axios.post<LoginResponse>(
-          "/auth/login",
+          `/auth/login`,
           payload,
           {
             headers: {
@@ -71,7 +72,6 @@ const SignInSection = () => {
             timeout: 10000,
           }
         );
-        console.log(response.data)
         return response.data;
       } catch (error) {
         if (axios.isAxiosError(error)) {
@@ -100,29 +100,24 @@ const SignInSection = () => {
           });
           setToken(token);
           setUsername(data.username || "User");
-          setEmail(data.email || "user@gmail.com")
+          setEmail(data.email || "user@gmail.com");
           if (data.session_id) {
             setSessionId(data.session_id);
           }
           toast.success("Logged in successfully");
           navigate("/dashboard", { replace: true });
         } catch (cookieError) {
-          console.error("Cookie setting error:", cookieError);
+          // console.error("Cookie setting error:", cookieError);
           toast.error("Login successful but session setup failed");
         }
       } else {
-        console.error("No access token in response:", data);
+        // console.error("No access token in response:", data);
         toast.error("Login failed: No access token received");
       }
-    },
-    onError: (error: Error) => {
-      console.error("Login error:", error);
-      toast.error(error.message);
     },
   });
 
   const onSubmit = (data: LoginFormInputs) => {
-    // console.log("Form submission data:", { ...data, password: "[REDACTED]" });
     loginMutation.mutate(data);
   };
 
@@ -233,6 +228,5 @@ const SignInSection = () => {
     </div>
   );
 };
-
 
 export default SignInSection;

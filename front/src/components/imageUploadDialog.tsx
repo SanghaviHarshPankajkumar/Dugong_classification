@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 //imageUploadDialog.tsx
 import { useState } from "react";
 import type { DragEvent, ChangeEvent, ReactNode } from "react";
@@ -97,6 +98,7 @@ const ImageUploadDialog = ({
       return;
     }
     setIsUploading(true);
+    resetSessionTimer()
     try {
       // Create FormData and append files
       const formData = new FormData();
@@ -105,13 +107,10 @@ const ImageUploadDialog = ({
       });
       formData.append("session_id", sessionId);
       // Make API call to your FastAPI endpoint
-      const response = await fetch(
-        "/api/upload-multiple/",
-        {
-          method: "POST",
-          body: formData,
-        }
-      );
+      const response = await fetch(`/upload-multiple/`, {
+        method: "POST",
+        body: formData,
+      });
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -120,11 +119,10 @@ const ImageUploadDialog = ({
       onImageUploaded?.(apiResponse);
       // Set session ID and reset timer
       setSessionId(apiResponse.sessionId);
-      resetSessionTimer(); // Reset the 30-minute timer
       setIsOpen(false);
       setUploadedImages([]);
     } catch (error) {
-      console.error("Upload failed:", error);
+      // console.error("Upload failed:", error);
       alert("Upload failed. Please try again.");
     } finally {
       setIsUploading(false);
@@ -136,7 +134,10 @@ const ImageUploadDialog = ({
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+    <Dialog open={isOpen} onOpenChange={(open) => {
+      if (!isUploading) setIsOpen(open);
+    }}
+    >
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-white/95 backdrop-blur-sm border-0 shadow-2xl">
         <DialogHeader>
@@ -152,10 +153,10 @@ const ImageUploadDialog = ({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-6">
+        <div className="space-y-4">
           {/* Upload Area */}
           <div
-            className={`relative border-2 border-dashed rounded-xl p-12 text-center transition-all duration-300 ${dragActive
+            className={`relative border-2 border-dashed rounded-xl p-8 text-center transition-all duration-300 ${dragActive
               ? "border-blue-500 bg-gradient-to-br from-blue-50 to-teal-50 scale-105"
               : "border-gray-300 hover:border-blue-400 bg-gradient-to-br from-gray-50 to-blue-50"
               }`}
@@ -174,7 +175,7 @@ const ImageUploadDialog = ({
             />
 
             <div className="space-y-4">
-              <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-teal-500 rounded-full flex items-center justify-center mx-auto shadow-lg">
+              <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-teal-500 rounded-full flex items-center justify-center mx-auto shadow-lg">
                 <CloudUpload className="w-8 h-8 text-white" />
               </div>
 
@@ -217,13 +218,14 @@ const ImageUploadDialog = ({
                         />
                       </div>
 
-                      <button
-                        onClick={() => handleRemoveImage(index)}
-                        className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600 shadow-lg"
-                        disabled={isUploading}
-                      >
-                        ×
-                      </button>
+                      {!isUploading && (
+                        <button
+                          onClick={() => handleRemoveImage(index)}
+                          className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600 shadow-lg"
+                        >
+                          ×
+                        </button>
+                      )}
 
                       <p
                         className="text-xs text-gray-600 mt-1 truncate"
@@ -258,8 +260,8 @@ const ImageUploadDialog = ({
               <Upload className="w-4 h-4" />
             )}
             {isUploading
-              ? "Uploading..."
-              : `Upload ${uploadedImages.length} ${uploadedImages.length === 1 ? "Image" : "Images"}`}
+              ? "Predicting..."
+              : `Predict ${uploadedImages.length} ${uploadedImages.length === 1 ? "Image with AI" : "Images with AI"}`}
           </Button>
         </DialogFooter>
       </DialogContent>
