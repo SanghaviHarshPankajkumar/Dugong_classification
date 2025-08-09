@@ -8,7 +8,6 @@ RUN npm install && npm run build
 # Stage 2: Backend + Frontend + MongoDB + Nginx
 FROM python:3.9-slim
 
-
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
     build-essential \
@@ -19,6 +18,7 @@ RUN apt-get update && apt-get install -y \
     libxext6 \
     ffmpeg \
     nginx \
+    gettext-base \
     && rm -rf /var/lib/apt/lists/*
 
 # Set environment
@@ -39,9 +39,9 @@ RUN pip install  -r /app/backend/requirements.txt
 # Copy built frontend
 COPY --from=frontend-builder /app/dist /app/frontend/
 
-# Copy and configure Nginx
+# Copy and configure Nginx (template supports dynamic PORT)
 RUN rm -f /etc/nginx/conf.d/default.conf
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY nginx.template.conf /app/nginx.template.conf
 
 # Copy startup script and make executable
 COPY startup.sh /app/startup.sh

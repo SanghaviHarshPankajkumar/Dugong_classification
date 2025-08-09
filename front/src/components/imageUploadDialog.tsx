@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 //imageUploadDialog.tsx
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import type { DragEvent, ChangeEvent, ReactNode } from "react";
 import { Upload, CloudUpload, Plus, Image, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -36,6 +37,7 @@ const ImageUploadDialog = ({
   const [dragActive, setDragActive] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const { setSessionId, resetSessionTimer, sessionId } = useUploadStore();
+  const navigate = useNavigate();
 
   const handleDrag = (e: DragEvent<HTMLDivElement>) => {
     e.preventDefault();
@@ -106,8 +108,8 @@ const ImageUploadDialog = ({
         formData.append("files", image.file);
       });
       formData.append("session_id", sessionId);
-      // Make API call to your FastAPI endpoint
-      const response = await fetch(`http://127.0.0.1:8000/upload-multiple/`, {
+      // Make API call to your FastAPI endpoint (proxied by Nginx)
+      const response = await fetch(`/api/upload-multiple/`, {
         method: "POST",
         body: formData,
       });
@@ -117,10 +119,16 @@ const ImageUploadDialog = ({
       const apiResponse = await response.json();
       // Pass the API response to parent component
       onImageUploaded?.(apiResponse);
-      // Set session ID and reset timer
-      setSessionId(apiResponse.sessionId);
+      // Preserve existing session if backend doesn't return one
+      if (apiResponse && apiResponse.sessionId) {
+        setSessionId(apiResponse.sessionId as string);
+      } else {
+        resetSessionTimer();
+      }
       setIsOpen(false);
       setUploadedImages([]);
+      // Ensure user lands on dashboard after upload
+      navigate("/dashboard", { replace: false });
     } catch (error) {
       // console.error("Upload failed:", error);
       alert("Upload failed. Please try again.");

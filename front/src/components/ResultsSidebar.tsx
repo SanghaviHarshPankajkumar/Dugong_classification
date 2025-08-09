@@ -1,10 +1,11 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { Info, ThumbsDown, Shell } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Info, Shell } from "lucide-react";
+// import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { useUploadStore } from "@/store/upload";
+// import { useUploadStore } from "@/store/upload";
 
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 const FloatingBubble = ({ size = "small", delay = 0 }) => (
   <div
@@ -55,47 +56,46 @@ const extractFormattedDate = (imageName: string) => {
 };
 const ResultsSidebar = ({
   currentImageData,
-  markedPoorImages,
-  onMarkPoor,
+  // markedPoorImages,
 }: ResultsSidebarProps) => {
-  const sessionId = useUploadStore((state) => state.sessionId);
-  const isMarkedPoor =
-    currentImageData && markedPoorImages.includes(currentImageData.imageId);
+  // const sessionId = useUploadStore((state) => state.sessionId);
+  // const isMarkedPoor =
+  //   currentImageData && markedPoorImages.includes(currentImageData.imageId);
 
 
 
-  const handleMarkPoor = async () => {
-    if (!currentImageData || !sessionId) {
-      return;
-    }
+  // const handleMarkPoor = async () => {
+  //   if (!currentImageData || !sessionId) {
+  //     return;
+  //   }
 
-    if (
-      window.confirm("Are you sure? You cannot change your decision later.")
-    ) {
-      const targetClass = currentImageData?.imageClass;
-      const imageName = currentImageData.imageUrl.split("/").pop();
+  //   if (
+  //     window.confirm("Are you sure? You cannot change your decision later.")
+  //   ) {
+  //     const targetClass = currentImageData?.imageClass;
+  //     const imageName = currentImageData.imageUrl.split("/").pop();
 
-      try {
-        const response = await fetch("http://127.0.0.1:8000/move-to-false-positive/", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            sessionId,
-            imageName,
-            targetClass,
-          }),
-        });
+  //     try {
+  //       const response = await fetch(`/api/move-to-false-positive/`, {
+  //         method: "POST",
+  //         headers: {
+  //           "Content-Type": "application/json",
+  //         },
+  //         body: JSON.stringify({
+  //           sessionId,
+  //           imageName,
+  //           targetClass,
+  //         }),
+  //       });
 
-        if (response.ok) {
-          onMarkPoor(currentImageData.imageId);
-        }
-      } catch (error) {
-        // console.error("Error:", error);
-      }
-    }
-  };
+  //       if (response.ok) {
+  //         onMarkPoor(currentImageData.imageId);
+  //       }
+  //     } catch (error) {
+  //       // console.error("Error:", error);
+  //     }
+  //   }
+  // };
   return (
     <div className="w-full min-h-screen  p-3 relative overflow-hidden">
       {/* Floating Bubbles */}
@@ -141,14 +141,37 @@ const ResultsSidebar = ({
                 {currentImageData?.calfCount || 0}
               </Badge>
             </div>
-            <div className="flex justify-between items-center p-2 bg-gradient-to-r from-teal-50 to-cyan-50 rounded-lg border border-teal-200/50 hover:border-teal-300 transition-colors">
-              <span className="text-sm font-medium text-slate-700">
-                Total Count
-              </span>
-              <Badge className="text-sm bg-gradient-to-r from-cyan-500 to-blue-500 text-white border-none shadow-md hover:shadow-lg transition-shadow">
-                {2 * currentImageData?.calfCount + currentImageData?.dugongCount || 0}
-              </Badge>
-            </div>
+            <div className="flex justify-between items-center p-2 bg-gradient-to-r from-cyan-50 to-sky-50 rounded-lg border border-cyan-200/50 hover:border-cyan-300 transition-colors">
+      <div className="flex items-center gap-1">
+        <span className="text-sm font-medium text-slate-700">Total Count</span>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button 
+                className="p-0.5 rounded-full hover:bg-cyan-100 transition-colors focus:outline-none focus:ring-2 focus:ring-cyan-300 focus:ring-offset-1"
+                aria-label="Information about total count calculation"
+              >
+                <Info className="w-4 h-4 text-cyan-600 hover:text-cyan-700 cursor-pointer" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent className="max-w-xs text-sm text-slate-600 p-3">
+              <div className="space-y-2">
+                <p className="font-medium text-slate-800">How Total Count is calculated:</p>
+                <div className="bg-slate-50 p-2 rounded text-xs font-mono">
+                  (2 × Mother Calf Count) + Dugong Count
+                </div>
+                <p className="text-xs text-slate-500">
+                  Each calf is counted as 2 in the total calculation
+                </p>
+              </div>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      </div>
+      <Badge className="text-sm bg-gradient-to-r from-cyan-500 to-blue-500 text-white border-none shadow-md hover:shadow-lg transition-shadow">
+        {(currentImageData?.calfCount ? 2 * currentImageData.calfCount : 0) + (currentImageData?.dugongCount || 0)}
+      </Badge>
+    </div>
             <div className="flex justify-between items-center p-2 bg-gradient-to-r from-teal-50 to-cyan-50 rounded-lg border border-teal-200/50 hover:border-teal-300 transition-colors">
               <span className="text-sm font-medium text-slate-700">
                 Behaviour
@@ -212,7 +235,7 @@ const ResultsSidebar = ({
           </CardContent>
         </Card>
 
-        {/* Quality Assessment */}
+        {/* Quality Assessment
         <Card className="bg-white/80 backdrop-blur-sm border-2 border-teal-200/50 shadow-xl hover:shadow-2xl transition-all duration-300 relative overflow-hidden">
           <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-red-400 via-orange-400 to-pink-400"></div>
           <CardHeader className="bg-gradient-to-r from-red-50/80 to-orange-50/80 relative py-2">
@@ -235,7 +258,7 @@ const ResultsSidebar = ({
               </span>
             </Button>
           </CardContent>
-        </Card>
+        </Card> */}
 
       </div>
     </div>

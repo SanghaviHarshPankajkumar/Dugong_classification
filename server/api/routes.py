@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, UploadFile, File
+from fastapi import APIRouter, HTTPException, UploadFile, File, Form
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from pathlib import Path
@@ -25,7 +25,7 @@ class BackfillResponse(BaseModel):
 
 
 @router.post("/upload-multiple/")
-async def upload_multiple(session_id: str, files: List[UploadFile] = File(...)):
+async def upload_multiple(session_id: str = Form(...), files: List[UploadFile] = File(...)):
     """Upload multiple images to a local session folder and run detection."""
     try:
         session_dir = BASE_DIR / session_id / "images"
@@ -114,45 +114,39 @@ async def cleanup_sessions(user_email: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.post("/move-to-false-positive/")
-async def move_to_false_positive(request: MoveImageRequest):
-    """Move an image between classification folders locally."""
-    try:
-        session_dir = BASE_DIR / request.sessionId
-        metadata_path = session_dir / "session_metadata.json"
+# @router.post("/mov    e-to-false-positive/")
+# async def move_to_false_positive(request: MoveImageRequest):
+#     """Move an image between classification folders locally."""
+#     try:
+#         session_dir = BASE_DIR / request.sessionId
+#         metadata_path = session_dir / "session_metadata.json"
 
-        if not metadata_path.exists():
-            raise HTTPException(status_code=404, detail="Session metadata not found.")
+#         if not metadata_path.exists():
+#             raise HTTPException(status_code=404, detail="Session metadata not found.")
 
-        with open(metadata_path, "r") as f:
-            metadata = json.load(f)
+#         with open(metadata_path, "r") as f:
+#             metadata = json.load(f)
 
-        if request.imageName not in metadata["images"]:
-            raise HTTPException(status_code=404, detail="Image not found in metadata.")
+#         if request.imageName not in metadata["images"]:
+#             raise HTTPException(status_code=404, detail="Image not found in metadata.")
 
-        current_class = metadata["images"][request.imageName]["imageClass"].lower()
-        opposite_class = "feeding" if current_class == "resting" else "resting"
+#         # Toggle classification and only update metadata.
+#         # Images are stored under `<session>/images/` (not per-class folders),
+#         # so we simply flip the class flag in metadata without moving files.
+#         current_class = metadata["images"][request.imageName]["imageClass"].lower()
+#         opposite_class = "feeding" if current_class == "resting" else "resting"
 
-        source_path = session_dir / current_class / request.imageName
-        target_path = session_dir / opposite_class / request.imageName
+#         metadata["images"][request.imageName]["imageClass"] = opposite_class
+#         metadata["images"][request.imageName]["updatedAt"] = datetime.utcnow().isoformat()
 
-        if not source_path.exists():
-            raise HTTPException(status_code=404, detail="Source image not found.")
+#         with open(metadata_path, "w") as f:
+#             json.dump(metadata, f, indent=4)
 
-        target_path.parent.mkdir(parents=True, exist_ok=True)
-        shutil.move(str(source_path), str(target_path))
+#         return {"message": f"Moved {request.imageName} to {opposite_class}."}
 
-        metadata["images"][request.imageName]["imageClass"] = opposite_class
-        metadata["images"][request.imageName]["updatedAt"] = datetime.utcnow().isoformat()
-
-        with open(metadata_path, "w") as f:
-            json.dump(metadata, f, indent=4)
-
-        return {"message": f"Moved {request.imageName} to {opposite_class}."}
-
-    except Exception as e:
-        logger.error(f"[Error in move-to-false-positive] {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+#     except Exception as e:
+#         logger.error(f"[Error in move-to-false-positive] {e}")
+#         raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.post("/backfill-detections/{session_id}")

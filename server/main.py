@@ -55,6 +55,7 @@ app.add_middleware(SessionMiddleware, secret_key=SECRET_KEY)
 async def startup_event():
     app_logger.info("Starting session-based cleanup background task")
     # Start cleanup with 5-minute intervals and 15-minute session expiry
+    asyncio.create_task(cleanup_expired_sessions(interval_seconds=300, expiry_minutes=15))
 
 # Register routers
 app.include_router(api_router, prefix="/api")     # Main API
