@@ -49,7 +49,7 @@ const DashboardPage = () => {
   const fetchSessionMetadata = async (sessionId: string) => {
     try {
       const response = await axios.get(
-        `/session-status/${sessionId}`
+        `http://127.0.0.1:8000/session-status/${sessionId}`
       );
       if (response.data && response.data.success) {
         setApiResponse({
@@ -105,7 +105,7 @@ const DashboardPage = () => {
     if (uploadSessionId) {
       try {
         await axios.post(
-          `/backfill-detections/${uploadSessionId}`
+          `http://127.0.0.1:8000/backfill-detections/${uploadSessionId}`
         );
       } catch (err) {
         // console.error("Failed to backfill detection results", err);

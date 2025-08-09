@@ -107,7 +107,7 @@ const ImageUploadDialog = ({
       });
       formData.append("session_id", sessionId);
       // Make API call to your FastAPI endpoint
-      const response = await fetch(`/upload-multiple/`, {
+      const response = await fetch(`http://127.0.0.1:8000/upload-multiple/`, {
         method: "POST",
         body: formData,
       });

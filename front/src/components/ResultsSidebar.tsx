@@ -62,7 +62,7 @@ const ResultsSidebar = ({
   const isMarkedPoor =
     currentImageData && markedPoorImages.includes(currentImageData.imageId);
 
-  const API_URL = import.meta.env.VITE_API_URL;
+
 
   const handleMarkPoor = async () => {
     if (!currentImageData || !sessionId) {
@@ -76,7 +76,7 @@ const ResultsSidebar = ({
       const imageName = currentImageData.imageUrl.split("/").pop();
 
       try {
-        const response = await fetch(`${API_URL}/move-to-false-positive/`, {
+        const response = await fetch("http://127.0.0.1:8000/move-to-false-positive/", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

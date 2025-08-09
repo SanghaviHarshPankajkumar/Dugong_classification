@@ -17,7 +17,7 @@ const DashboardHeader = ({ onImageUpload }: DashboardHeaderProps) => {
     }
     try {
       const response = await fetch(
-        `/export-session-csv/${sessionId}`
+        `http://127.0.0.1:8000/export-session-csv/${sessionId}`
       );
       if (!response.ok) throw new Error("Failed to export CSV");
       const blob = await response.blob();
