@@ -8,12 +8,10 @@ import json
 import logging
 import io
 import csv
-import tempfile
 from typing import List
-
 from core.config import BASE_DIR
-from models.image import ImageResult, MoveImageRequest
-from core.detection import run_detection
+from schemas.request import MoveImageRequest
+from services.model_service import run_model_on_images  # from old file
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -40,14 +38,22 @@ async def upload_multiple(session_id: str, files: List[UploadFile] = File(...)):
         else:
             metadata = {"images": {}}
 
+        saved_paths = []
+        file_names = []
         for file in files:
             file_path = session_dir / file.filename
             with open(file_path, "wb") as buffer:
                 buffer.write(await file.read())
+            saved_paths.append(file_path)
+            file_names.append(file.filename)
 
-            result = run_detection(file_path)
-            metadata["images"][file.filename] = {
-                **result,
+        # Run detection in batch using old function
+        results = run_model_on_images(saved_paths, session_id)
+        for filename, (dugong_count, calf_count, image_class, _) in zip(file_names, results):
+            metadata["images"][filename] = {
+                "dugongCount": dugong_count,
+                "calfCount": calf_count,
+                "imageClass": image_class,
                 "uploadedAt": datetime.utcnow().isoformat()
             }
 
@@ -166,12 +172,18 @@ async def backfill_detections(session_id: str):
         all_files = {f.name for f in session_dir.iterdir() if f.is_file()}
         missing_files = all_files - processed_files
 
-        for file_name in missing_files:
-            file_path = session_dir / file_name
-            result = run_detection(file_path)
-            total_count = result.get("dugongCount", 0) + 2 * result.get("calfCount", 0)
+        if not missing_files:
+            return BackfillResponse(message="No missing files to backfill.", added_files=[])
+
+        missing_paths = [session_dir / fname for fname in missing_files]
+        results = run_model_on_images(missing_paths, session_id)
+
+        for file_name, (dugong_count, calf_count, image_class, _) in zip(missing_files, results):
+            total_count = dugong_count + 2 * calf_count
             metadata["images"][file_name] = {
-                **result,
+                "dugongCount": dugong_count,
+                "calfCount": calf_count,
+                "imageClass": image_class,
                 "totalCount": total_count,
                 "uploadedAt": datetime.utcnow().isoformat()
             }
@@ -204,7 +216,7 @@ async def export_session_csv(session_id: str):
         output = io.StringIO()
         writer = None
 
-        for idx, (image_name, data) in enumerate(metadata.get("images", {}).items()):
+        for image_name, data in metadata.get("images", {}).items():
             row = {"IMAGE_NAME": image_name, **{k.upper(): v for k, v in data.items()}}
             if "TOTALCOUNT" not in row:
                 row["TOTALCOUNT"] = row.get("DUGONGCOUNT", 0) + 2 * row.get("CALFCOUNT", 0)
