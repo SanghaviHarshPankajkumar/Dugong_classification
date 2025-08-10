@@ -5,10 +5,9 @@ Handles model inference and detection result processing.
 
 from pathlib import Path
 from ultralytics import YOLO
-from core.config import MODEL_PATH, BASE_DIR,CLASSIFICATION_MODEL_PATH
+from core.config import BASE_DIR
 from core.logger import setup_logger
 from typing import List, Tuple
-import requests
 
 import numpy as np
 import torch
@@ -16,21 +15,35 @@ import os
 import cv2
 
 logger = setup_logger("model_service", "logs/model_service.log")
-url = "https://storage.googleapis.com/dugong_models/best.pt"
 
-response = requests.get(url)
-# Save to disk
-with open("MLmodel.pt", "wb") as f:
-    f.write(response.content)
-model = YOLO("MLmodel.pt")
+def _ensure_model(path: Path, url: str) -> Path:
+    try:
+        if path.exists():
+            return path
+        tmp_path = Path("/tmp") / path.name
+        if tmp_path.exists():
+            return tmp_path
+        import requests
+        r = requests.get(url, timeout=60)
+        r.raise_for_status()
+        with open(tmp_path, "wb") as f:
+            f.write(r.content)
+        return tmp_path
+    except Exception as e:
+        logger.error(f"Failed to ensure model {path.name}: {e}")
+        raise
 
-url = "https://storage.googleapis.com/dugong_models/classification_model.pt"
-response = requests.get(url)
-# Save to disk
-with open("classification_model.pt", "wb") as f:
-    f.write(response.content)
-    
-classification_model = YOLO("classification_model.pt")
+# Prefer baked-in files from the image (/app/model/*). Fallback: download to /tmp.
+DETECT_URL = "https://storage.googleapis.com/dugong_models/best.pt"
+CLASSIFY_URL = "https://storage.googleapis.com/dugong_models/classification_model.pt"
+
+detect_path = _ensure_model(Path("/app/model/MLmodel.pt"), DETECT_URL)
+classification_path = _ensure_model(Path("/app/model/classification_model.pt"), CLASSIFY_URL)
+
+model = YOLO(str(detect_path))
+classification_model = YOLO(str(classification_path))
+
+ 
 
 def fully_dynamic_nms(preds, iou_min=0.1, iou_max=0.6):
     from ultralytics.engine.results import Boxes

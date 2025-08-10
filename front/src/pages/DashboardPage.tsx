@@ -36,36 +36,25 @@ const DashboardPage = () => {
     }
   }, [authSessionId, uploadSessionId, setUploadSessionId]);
 
-  type SessionFile = {
-    filename: string;
-    createdAt?: string;
-    dugongCount?: number;
-    calfCount?: number;
-    imageClass?: string;
-    imageUrl?: string;
-  };
+  // Derived from backend metadata; no explicit type to avoid mismatch warnings
 
   // Fetch full session metadata and update image store
   const fetchSessionMetadata = async (sessionId: string) => {
     try {
-      const response = await axios.get(
-        `http://127.0.0.1:8000/session-status/${sessionId}`
-      );
-      if (response.data && response.data.success) {
-        setApiResponse({
-          results: response.data.files.map(
-            (file: SessionFile, idx: number) => ({
-              imageId: idx,
-              imageUrl: file.imageUrl || "",
-              createdAt: file.createdAt || response.data.lastActivity || "",
-              dugongCount: file.dugongCount ?? 0,
-              calfCount: file.calfCount ?? 0,
-              imageClass: file.imageClass ?? "N/A",
-            })
-          ),
-        });
-        // setLastImageCount(response.data.files.length);
-        return response.data.files.length;
+      const response = await axios.get(`/api/session-status/${sessionId}`);
+      const metadata = response.data?.metadata;
+      const images = metadata?.images as Record<string, any> | undefined;
+      if (images && typeof images === "object") {
+        const results = Object.entries(images).map(([fileName, data], idx) => ({
+          imageId: String(idx),
+          imageUrl: `/uploads/${sessionId}/images/${fileName}`,
+          createdAt: (data as any)?.uploadedAt || metadata?.last_activity || "",
+          dugongCount: (data as any)?.dugongCount ?? 0,
+          calfCount: (data as any)?.calfCount ?? 0,
+          imageClass: (data as any)?.imageClass ?? "N/A",
+        }));
+        setApiResponse({ results });
+        return results.length;
       }
     } catch (error) {
       // console.error("Failed to fetch session metadata", error);
@@ -104,14 +93,16 @@ const DashboardPage = () => {
   const handleImageUpload = async () => {
     if (uploadSessionId) {
       try {
-        await axios.post(
-          `http://127.0.0.1:8000/backfill-detections/${uploadSessionId}`
-        );
+        await axios.post(`/api/backfill-detections/${uploadSessionId}`);
       } catch (err) {
         // console.error("Failed to backfill detection results", err);
       }
       // Fetch once, then poll for new images
       const initialCount = await fetchSessionMetadata(uploadSessionId);
+      if ((initialCount || 0) === 0) {
+        // If nothing yet, refresh once more after a short delay
+        setTimeout(() => fetchSessionMetadata(uploadSessionId), 1500);
+      }
       pollForImages(uploadSessionId, initialCount || 0);
     }
   };
