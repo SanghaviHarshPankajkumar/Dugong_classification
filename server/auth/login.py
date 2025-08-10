@@ -5,6 +5,7 @@ from jose import jwt
 from datetime import datetime, timedelta
 from pymongo import MongoClient
 from dotenv import load_dotenv
+import certifi
 import os
 import uuid
 
@@ -23,12 +24,19 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 60
 # Password hashing context
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-# MongoDB setup
+# MongoDB setup with short timeouts so requests fail fast instead of 502 from the proxy
 client = None
 user_collection = None
 try:
-    client = MongoClient(MONGO_URL)
-    # Test the connection
+    client = MongoClient(
+        MONGO_URL,
+        serverSelectionTimeoutMS=2000,
+        connectTimeoutMS=2000,
+        socketTimeoutMS=2000,
+        tls=True,
+        tlsCAFile=certifi.where(),
+    )
+    # Test the connection (will respect the short timeout)
     client.admin.command("ping")
     db = client["DugongMonitoring"]
     user_collection = db["users"]
@@ -65,15 +73,26 @@ def login(request: LoginRequest):
 
         # Ensure Mongo client/collection are available at request time
         global client, user_collection
-        if client is None or user_collection is None:
-            client = MongoClient(MONGO_URL)
-            client.admin.command("ping")
-            db = client["DugongMonitoring"]
-            user_collection = db["users"]
-        else:
-            # Test MongoDB connection
-            client.admin.command("ping")
-        print("MongoDB connection successful")
+        try:
+            if client is None or user_collection is None:
+                client = MongoClient(
+                    MONGO_URL,
+                    serverSelectionTimeoutMS=2000,
+                    connectTimeoutMS=2000,
+                    socketTimeoutMS=2000,
+                    tls=True,
+                    tlsCAFile=certifi.where(),
+                )
+                client.admin.command("ping")
+                db = client["DugongMonitoring"]
+                user_collection = db["users"]
+            else:
+                # Test MongoDB connection
+                client.admin.command("ping")
+            print("MongoDB connection successful")
+        except Exception as db_err:
+            # Return a clear, fast error instead of letting the proxy time out
+            raise HTTPException(status_code=503, detail=f"Auth database unavailable: {db_err}")
 
         user = user_collection.find_one({"email": request.email})
         print("User found:", bool(user))

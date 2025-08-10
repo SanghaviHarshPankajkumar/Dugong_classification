@@ -11,7 +11,11 @@ import csv
 from typing import List
 from core.config import BASE_DIR
 from schemas.request import MoveImageRequest
-from services.model_service import run_model_on_images  # from old file
+# Lazy import to prevent heavy model initialization at app startup.
+# This keeps the backend light so auth and health endpoints work immediately.
+def _run_model_on_images_lazy():
+    from services.model_service import run_model_on_images  # type: ignore
+    return run_model_on_images
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -47,7 +51,8 @@ async def upload_multiple(session_id: str = Form(...), files: List[UploadFile] =
             saved_paths.append(file_path)
             file_names.append(file.filename)
 
-        # Run detection in batch using old function
+        # Run detection in batch (lazy import to avoid heavy startup costs)
+        run_model_on_images = _run_model_on_images_lazy()
         results = run_model_on_images(saved_paths, session_id)
         for filename, (dugong_count, calf_count, image_class, _) in zip(file_names, results):
             metadata["images"][filename] = {
@@ -170,6 +175,7 @@ async def backfill_detections(session_id: str):
             return BackfillResponse(message="No missing files to backfill.", added_files=[])
 
         missing_paths = [session_dir / fname for fname in missing_files]
+        run_model_on_images = _run_model_on_images_lazy()
         results = run_model_on_images(missing_paths, session_id)
 
         for file_name, (dugong_count, calf_count, image_class, _) in zip(missing_files, results):

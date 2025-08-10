@@ -63,7 +63,7 @@ const SignInSection = () => {
         // Ensure email is sent as lowercase
         const payload = { ...data, email: data.email.toLowerCase() };
         const response = await axios.post<LoginResponse>(
-          "/auth/login",
+          "http://127.0.0.1:8000/auth/login",
           payload,
           {
             headers: {
