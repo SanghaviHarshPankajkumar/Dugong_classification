@@ -16,9 +16,11 @@ if [ -f /app/nginx.template.conf ]; then
   envsubst '\$PORT' < /app/nginx.template.conf > /etc/nginx/conf.d/default.conf
 fi
 
-# 4. Create initial user
+# 4. Create initial user (non-blocking)
 echo "Running initial user creation script..."
-python3 /app/backend/create_user.py
+if ! python3 /app/backend/create_user.py; then
+  echo "create_user.py failed; continuing startup so the service is still available"
+fi
 
 # 5. Start FastAPI backend in background
 echo "Starting FastAPI backend..."

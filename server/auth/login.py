@@ -11,8 +11,7 @@ import uuid
 # Load environment variables
 load_dotenv()
 
-# FastAPI app and router
-app = FastAPI()
+# Only define a router here; the main application includes it
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 # Config
@@ -25,16 +24,18 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 60
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 # MongoDB setup
+client = None
+user_collection = None
 try:
     client = MongoClient(MONGO_URL)
     # Test the connection
-    client.admin.command('ping')
+    client.admin.command("ping")
     db = client["DugongMonitoring"]
     user_collection = db["users"]
     print(f"Successfully connected to MongoDB at {MONGO_URL}")
 except Exception as e:
-    print(f"Failed to connect to MongoDB: {e}")
-    # Don't exit here, let the error be handled in the endpoint
+    # Defer raising to the endpoint so the app can still start
+    print(f"Failed to connect to MongoDB at startup: {e}")
 
 # Request and response models
 class LoginRequest(BaseModel):
@@ -62,8 +63,16 @@ def login(request: LoginRequest):
         print("MONGO_URL:", MONGO_URL)
         print("Login request received:", request.email)
 
-        # Test MongoDB connection
-        client.admin.command('ping')
+        # Ensure Mongo client/collection are available at request time
+        global client, user_collection
+        if client is None or user_collection is None:
+            client = MongoClient(MONGO_URL)
+            client.admin.command("ping")
+            db = client["DugongMonitoring"]
+            user_collection = db["users"]
+        else:
+            # Test MongoDB connection
+            client.admin.command("ping")
         print("MongoDB connection successful")
 
         user = user_collection.find_one({"email": request.email})
@@ -110,5 +119,5 @@ def login(request: LoginRequest):
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
-# Include the router in the app
-app.include_router(router)
+# Note: Do not create or include a FastAPI app instance here.
+# The main application (server/main.py) mounts this router.
