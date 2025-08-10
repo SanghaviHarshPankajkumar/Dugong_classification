@@ -20,7 +20,7 @@ def _run_model_on_images_lazy():
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
-SESSION_TIMEOUT_MINUTES = 15
+SESSION_TIMEOUT_MINUTES = 30
 
 
 class BackfillResponse(BaseModel):
@@ -219,7 +219,7 @@ async def export_session_csv(session_id: str):
         for image_name, data in metadata.get("images", {}).items():
             row = {"IMAGE_NAME": image_name, **{k.upper(): v for k, v in data.items()}}
             if "TOTALCOUNT" not in row:
-                row["TOTALCOUNT"] = row.get("DUGONGCOUNT", 0) + 2 * row.get("CALFCOUNT", 0)
+                row["TOTALCOUNT"] = row.get("DUGONGCOUNT", 0) + 2 * row.get("MOTHERCALFCOUNT", 0)
 
             if writer is None:
                 writer = csv.DictWriter(output, fieldnames=row.keys())

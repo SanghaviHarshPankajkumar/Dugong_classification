@@ -16,7 +16,7 @@ logger = setup_logger("cleanup", "logs/cleanup.log")
 # Matches timestamp-based folder names (format: YYYYMMDDTHHMMSSZ_*)
 SESSION_REGEX = re.compile(r"^(\d{8}T\d{6}Z)_.+")
 
-def is_session_expired(session_folder: Path, expiry_minutes: int = 15) -> bool:
+def is_session_expired(session_folder: Path, expiry_minutes: int = 30) -> bool:
     """
     Check if a session is expired based on its last activity.
     
@@ -98,7 +98,7 @@ def update_session_activity(session_id: str):
     except Exception as e:
         logger.error(f"Failed to update session activity for {session_id}: {e}")
 
-async def cleanup_expired_sessions(interval_seconds: int = 300, expiry_minutes: int = 15):
+async def cleanup_expired_sessions(interval_seconds: int = 300, expiry_minutes: int =30):
     """
     Monitor and remove expired session folders automatically.
     Only cleans up sessions that have actually expired based on their last activity.

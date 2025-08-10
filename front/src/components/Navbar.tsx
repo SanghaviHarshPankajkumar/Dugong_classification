@@ -42,7 +42,7 @@ function formatTimeRemaining(seconds: number): string {
 
 const Navbar: React.FC<NavbarProps> = ({ imageCount = 0 }) => {
   const navigate = useNavigate();
-  const [sessionTimeLeft, setSessionTimeLeft] = useState(15 * 60); // 15 minutes in seconds
+  const [sessionTimeLeft, setSessionTimeLeft] = useState(30 * 60); // 30 minutes in seconds
   const [isSessionExpired, setIsSessionExpired] = useState(false);
   const { sessionId, sessionStartTime } = useUploadStore();
   const { username: userName, email: userEmail } = useAuthStore();
@@ -80,7 +80,7 @@ const Navbar: React.FC<NavbarProps> = ({ imageCount = 0 }) => {
     const timer = setInterval(() => {
       if (sessionStartTime) {
         const elapsed = Math.floor((Date.now() - sessionStartTime) / 1000);
-        const remaining = Math.max(0, 15 * 60 - elapsed);
+        const remaining = Math.max(0, 30 * 60 - elapsed);
         setSessionTimeLeft(remaining);
 
         if (remaining === 0 && !isSessionExpired) {

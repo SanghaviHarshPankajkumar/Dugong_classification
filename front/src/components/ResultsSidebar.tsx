@@ -156,7 +156,7 @@ const ResultsSidebar = ({
             </TooltipTrigger>
             <TooltipContent className="max-w-xs text-sm text-slate-600 p-3">
               <div className="space-y-2">
-                <p className="font-medium text-slate-800">How Total Count is calculated:</p>
+                <p className="font-medium text-slate-800"> Total Count Calculation Formula:</p>
                 <div className="bg-slate-50 p-2 rounded text-xs font-mono">
                   (2 × Mother Calf Count) + Dugong Count
                 </div>
