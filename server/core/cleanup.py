@@ -6,15 +6,11 @@ import asyncio
 from pathlib import Path
 from datetime import datetime, timedelta
 import shutil
-import re
 import json
 from core.config import BASE_DIR
 from core.logger import setup_logger
 
 logger = setup_logger("cleanup", "logs/cleanup.log")
-
-# Matches timestamp-based folder names (format: YYYYMMDDTHHMMSSZ_*)
-SESSION_REGEX = re.compile(r"^(\d{8}T\d{6}Z)_.+")
 
 def is_session_expired(session_folder: Path, expiry_minutes: int = 30) -> bool:
     """
@@ -28,7 +24,7 @@ def is_session_expired(session_folder: Path, expiry_minutes: int = 30) -> bool:
         bool: True if session is expired, False otherwise
     """
     try:
-        # First check if there's a session metadata file
+        # Check if there's a session metadata file
         metadata_file = session_folder / "session_metadata.json"
         
         if metadata_file.exists():
@@ -39,12 +35,8 @@ def is_session_expired(session_folder: Path, expiry_minutes: int = 30) -> bool:
                 cutoff = datetime.utcnow() - timedelta(minutes=expiry_minutes)
                 return last_activity < cutoff
         else:
-            # Fallback to folder creation time from folder name
-            match = SESSION_REGEX.match(session_folder.name)
-            if match:
-                session_time = datetime.strptime(match.group(1), "%Y%m%dT%H%M%SZ")
-                cutoff = datetime.utcnow() - timedelta(minutes=expiry_minutes)
-                return session_time < cutoff
+            # If no metadata file, assume the session is expired for safety
+            return True
                 
     except (ValueError, KeyError, json.JSONDecodeError) as e:
         logger.warning(f"Error checking session expiry for {session_folder}: {e}")
@@ -61,14 +53,10 @@ def update_session_activity(session_id: str):
         session_id: The session identifier
     """
     try:
-        # Find the session folder
-        session_folder = None
-        for folder in BASE_DIR.iterdir():
-            if folder.is_dir() and session_id in folder.name:
-                session_folder = folder
-                break
+        # Find the session folder by exact session ID
+        session_folder = BASE_DIR / session_id
         
-        if not session_folder:
+        if not session_folder.exists() or not session_folder.is_dir():
             logger.warning(f"Session folder not found for ID: {session_id}")
             return
         
@@ -115,10 +103,6 @@ async def cleanup_expired_sessions(interval_seconds: int = 300, expiry_minutes: 
             
             for session_folder in BASE_DIR.iterdir():
                 if not session_folder.is_dir():
-                    continue
-                    
-                # Skip if it doesn't match session folder pattern
-                if not SESSION_REGEX.match(session_folder.name):
                     continue
                 
                 # Check if session is expired

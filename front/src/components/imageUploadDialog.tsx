@@ -1,20 +1,22 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 //imageUploadDialog.tsx
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import type { DragEvent, ChangeEvent, ReactNode } from "react";
-import { Upload, CloudUpload, Plus, Image, Loader2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import type { ChangeEvent, DragEvent, ReactNode } from "react";
+import { CloudUpload, Loader2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogFooter,
 } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
+import { useAuthStore } from "@/store/auth";
 import { useUploadStore } from "@/store/upload";
+import axios from "axios";
 
 interface ImageFile {
   url: string;
@@ -36,7 +38,8 @@ const ImageUploadDialog = ({
   const [uploadedImages, setUploadedImages] = useState<ImageFile[]>([]);
   const [dragActive, setDragActive] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
-  const { setSessionId, resetSessionTimer, sessionId } = useUploadStore();
+  const { resetSessionTimer } = useUploadStore();
+  const { sessionId } = useAuthStore(); // Use auth store session ID
   const navigate = useNavigate();
 
   const handleDrag = (e: DragEvent<HTMLDivElement>) => {
@@ -100,7 +103,7 @@ const ImageUploadDialog = ({
       return;
     }
     setIsUploading(true);
-    resetSessionTimer()
+    resetSessionTimer();
     try {
       // Create FormData and append files
       const formData = new FormData();
@@ -108,20 +111,20 @@ const ImageUploadDialog = ({
         formData.append("files", image.file);
       });
       formData.append("session_id", sessionId);
-      // Make API call to your FastAPI endpoint (proxied by Nginx)
-      const response = await fetch(`/api/upload-multiple/`, {
-        method: "POST",
-        body: formData,
+
+      // Use axios instead of fetch to use the configured base URL
+      const response = await axios.post("/api/upload-multiple/", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
       });
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      const apiResponse = await response.json();
+
+      const apiResponse = response.data;
       // Pass the API response to parent component
       onImageUploaded?.(apiResponse);
       // Preserve existing session if backend doesn't return one
       if (apiResponse && apiResponse.sessionId) {
-        setSessionId(apiResponse.sessionId as string);
+        // setSessionId(apiResponse.sessionId as string); // This line is removed as per the edit hint
       } else {
         resetSessionTimer();
       }
@@ -142,9 +145,11 @@ const ImageUploadDialog = ({
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => {
-      if (!isUploading) setIsOpen(open);
-    }}
+    <Dialog
+      open={isOpen}
+      onOpenChange={(open) => {
+        if (!isUploading) setIsOpen(open);
+      }}
     >
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-white/95 backdrop-blur-sm border-0 shadow-2xl">
@@ -164,10 +169,11 @@ const ImageUploadDialog = ({
         <div className="space-y-4">
           {/* Upload Area */}
           <div
-            className={`relative border-2 border-dashed rounded-xl p-8 text-center transition-all duration-300 ${dragActive
-              ? "border-blue-500 bg-gradient-to-br from-blue-50 to-teal-50 scale-105"
-              : "border-gray-300 hover:border-blue-400 bg-gradient-to-br from-gray-50 to-blue-50"
-              }`}
+            className={`relative border-2 border-dashed rounded-xl p-8 text-center transition-all duration-300 ${
+              dragActive
+                ? "border-blue-500 bg-gradient-to-br from-blue-50 to-teal-50 scale-105"
+                : "border-gray-300 hover:border-blue-400 bg-gradient-to-br from-gray-50 to-blue-50"
+            }`}
             onDragEnter={handleDrag}
             onDragLeave={handleDrag}
             onDragOver={handleDrag}
@@ -200,7 +206,7 @@ const ImageUploadDialog = ({
                 className="gap-2 bg-gradient-to-r from-blue-500 to-teal-500 hover:from-blue-600 hover:to-teal-600 text-white shadow-lg"
                 disabled={isUploading}
               >
-                <Plus className="w-4 h-4" />
+                <CloudUpload className="w-4 h-4" />
                 Choose Files
               </Button>
             </div>
@@ -210,7 +216,7 @@ const ImageUploadDialog = ({
           {uploadedImages.length > 0 && (
             <div className="space-y-4">
               <h3 className="font-semibold text-lg flex items-center gap-2">
-                <Image className="w-5 h-5 text-blue-600" />
+                <CloudUpload className="w-5 h-5 text-blue-600" />
                 Uploaded Images ({uploadedImages.length})
               </h3>
 
@@ -265,7 +271,7 @@ const ImageUploadDialog = ({
             {isUploading ? (
               <Loader2 className="w-4 h-4 animate-spin" />
             ) : (
-              <Upload className="w-4 h-4" />
+              <CloudUpload className="w-4 h-4" />
             )}
             {isUploading
               ? "Predicting..."

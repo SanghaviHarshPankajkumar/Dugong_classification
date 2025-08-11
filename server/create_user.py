@@ -19,6 +19,7 @@ try:
     else:
         users.insert_one({
             "email": "test@example.com",
+            "username": "test user",
             "hashed_password": hashed
         })
         print("User created successfully.")

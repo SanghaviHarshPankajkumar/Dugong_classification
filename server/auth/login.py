@@ -116,10 +116,9 @@ def login(request: LoginRequest):
         useremail = user.get("email", "")
         
         # --- SESSION ID LOGIC ---
-        session_id = user.get("session_id")
-        if not session_id:
-            session_id = str(uuid.uuid4())
-            user_collection.update_one({"email": request.email}, {"$set": {"session_id": session_id}})
+        # Always generate a new session ID on every login for security
+        session_id = str(uuid.uuid4())
+        user_collection.update_one({"email": request.email}, {"$set": {"session_id": session_id}})
 
         token = create_token(
             {"sub": user["email"]},

@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { Info, Shell } from "lucide-react";
+import { Info, Shell, Square, Map } from "lucide-react";
 // import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -96,6 +96,14 @@ const ResultsSidebar = ({
   //     }
   //   }
   // };
+  const getBehaviorLabel = (imageClass?: string): string => {
+    if (!imageClass) return "N/A";
+    const normalized = imageClass.trim().toLowerCase();
+    if (normalized === "resting") return "Resting";
+    if (normalized === "feeding") return "Feeding";
+    return imageClass;
+  };
+
   return (
     <div className="w-full min-h-screen  p-3 relative overflow-hidden">
       {/* Floating Bubbles */}
@@ -177,7 +185,7 @@ const ResultsSidebar = ({
                 Behaviour
               </span>
               <Badge className="text-sm bg-gradient-to-r from-orange-400 to-pink-400 text-white border-none shadow-md hover:shadow-lg transition-shadow">
-                {currentImageData?.imageClass || "N/A"}
+                {getBehaviorLabel(currentImageData?.imageClass)}
               </Badge>
             </div>
           </CardContent>
@@ -235,30 +243,27 @@ const ResultsSidebar = ({
           </CardContent>
         </Card>
 
-        {/* Quality Assessment
         <Card className="bg-white/80 backdrop-blur-sm border-2 border-teal-200/50 shadow-xl hover:shadow-2xl transition-all duration-300 relative overflow-hidden">
-          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-red-400 via-orange-400 to-pink-400"></div>
-          <CardHeader className="bg-gradient-to-r from-red-50/80 to-orange-50/80 relative py-2">
-            <CardTitle className="text-lg font-semibold text-red-800">
-              Quality Assessment
+          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-400"></div>
+          <CardHeader className="bg-gradient-to-r from-blue-50/80 to-indigo-50/80 relative py-2">
+            <CardTitle className="flex items-center gap-2 text-lg font-semibold text-blue-800">
+              <div className="p-1.5 bg-blue-100 rounded-full shadow-md">
+                <Map className="w-4 h-4 text-blue-600" />
+              </div>
+              Legend
             </CardTitle>
           </CardHeader>
-          <CardContent className="py-3 px-4">
-            <Button
-              className={`w-full gap-2 transition-all duration-500 min-h-[36px] text-sm ${isMarkedPoor
-                ? "bg-gradient-to-r from-red-500 to-red-600 hover:from-red-500 hover:to-red-600"
-                : "bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-400 hover:to-orange-400"
-                } border-none shadow-lg text-white hover:shadow-xl`}
-              onClick={handleMarkPoor}
-              disabled={isMarkedPoor}
-            >
-              <ThumbsDown className="w-4 h-4 flex-shrink-0" />
-              <span className="text-center">
-                {isMarkedPoor ? "Marked as Poor Quality" : "Mark as Poor Quality"}
-              </span>
-            </Button>
+          <CardContent className="py-3 px-4 space-y-3">
+            <div className="flex w-full items-center justify-between">
+              <span className="text-sm text-slate-700">Dugong</span>
+              <Square className="w-4 h-4 text-blue-600" />
+            </div>
+            <div className="flex w-full items-center justify-between">
+              <span className="text-sm text-slate-700">Mother Calf</span>
+              <Square className="w-4 h-4 text-red-600" />
+            </div>
           </CardContent>
-        </Card> */}
+        </Card>
 
       </div>
     </div>

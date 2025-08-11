@@ -53,6 +53,7 @@ export const useUploadStore = create<UploadState>()(
 
       setSessionId: (sessionId: string) => {
         set({
+          files: [], // Clear files when setting new session ID
           sessionId,
           sessionStartTime: Date.now(),
         });
@@ -90,6 +91,7 @@ export const useUploadStore = create<UploadState>()(
 
       clearStore: () => {
         set({
+          files: [],
           sessionId: null,
           sessionStartTime: null,
         });

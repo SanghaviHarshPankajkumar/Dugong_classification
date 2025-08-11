@@ -57,15 +57,42 @@ const ImageViewer = ({
       <CardContent>
         <div className="relative overflow-hidden rounded-xl border-2 border-white/30 bg-white/10 backdrop-blur-sm inline-block shadow-lg">
           {currentImageData && (
-            <img
-              src={
-                currentImageData?.imageUrl
-                  ? `${currentImageData.imageUrl}`
-                  : ""
-              }
-              alt="Dugong monitoring capture"
-              className="w-auto h-auto max-w-full max-h-full object-contain transition-transform duration-300 hover:scale-105"
-            />
+            <>
+              {/* Debug info in development */}
+              {process.env.NODE_ENV === "development" &&
+                currentImageData.imageUrl && (
+                  <div className="absolute top-2 left-2 bg-black/70 text-white text-xs p-2 rounded z-10 max-w-xs break-all">
+                    <div>Image URL: {currentImageData.imageUrl}</div>
+                  </div>
+                )}
+
+              <img
+                src={
+                  currentImageData?.imageUrl
+                    ? `${currentImageData.imageUrl}`
+                    : ""
+                }
+                alt="Dugong monitoring capture"
+                className="w-auto h-auto max-w-full max-h-full object-contain transition-transform duration-300 hover:scale-105"
+                onLoad={() => {
+                  if (process.env.NODE_ENV === "development") {
+                    // console.log(
+                    //   "✅ Image loaded successfully:",
+                    //   currentImageData.imageUrl
+                    // );
+                  }
+                }}
+                onError={(e) => {
+                  if (process.env.NODE_ENV === "development") {
+                    console.error(
+                      "❌ Image failed to load:",
+                      currentImageData.imageUrl,
+                      e
+                    );
+                  }
+                }}
+              />
+            </>
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent pointer-events-none" />
         </div>
