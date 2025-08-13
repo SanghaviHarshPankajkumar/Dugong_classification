@@ -3,6 +3,11 @@ from passlib.context import CryptContext
 from pymongo import MongoClient
 import sys
 
+
+from passlib.handlers import bcrypt
+
+# Force Passlib to skip the broken _bcrypt module
+bcrypt.set_backend("builtin")  # or "pybcrypt" if available
 try:
     pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
     hashed = pwd_context.hash("secret123")

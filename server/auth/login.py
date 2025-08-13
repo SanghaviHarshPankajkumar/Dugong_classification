@@ -9,6 +9,12 @@ import certifi
 import os
 import uuid
 
+
+from passlib.handlers import bcrypt
+
+# Force Passlib to skip the broken _bcrypt module
+bcrypt.set_backend("builtin")  # or "pybcrypt" if available
+
 # Load environment variables
 load_dotenv()
 
