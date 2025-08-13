@@ -6,7 +6,7 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import LandingPage from "./pages/LandingPage";
 import DashboardPage from "./pages/DashboardPage";
 import { useBeforeUnload } from "@/hooks/useBeforeUnload.ts";
-import axios from "axios";
+// import axios from "axios";
 import { getApiConfig } from "@/lib/api-config";
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({
@@ -37,8 +37,8 @@ const App = () => {
   const handleUnload = () => {
     if (token && sessionId) {
       // console.log(
-        // "🔄 Tab close detected - beacon cleanup will handle session cleanup for:",
-        // sessionId
+      // "🔄 Tab close detected - beacon cleanup will handle session cleanup for:",
+      // sessionId
       // );
     } else {
       // console.log("ℹ️ No session to cleanup on unload");
@@ -84,10 +84,10 @@ const App = () => {
           cleanupData.append("session_id", sessionId);
           cleanupData.append("source", "manual_test");
 
-          const success = navigator.sendBeacon(
-            `${apiConfig.baseURL}/api/cleanup-session-beacon`,
-            cleanupData
-          );
+          // const success = navigator.sendBeacon(
+          //   `${apiConfig.baseURL}/api/cleanup-session-beacon`,
+          //   cleanupData
+          // );
           // console.log(
           //   "🧪 Manual beacon test result:",
           //   success ? "SUCCESS" : "FAILED"
@@ -105,19 +105,19 @@ const App = () => {
         // console.log("🧪 Manual beacon test available: window.testBeacon()");
 
         // Also add a test function that uses axios to verify endpoint accessibility
-        const testEndpoint = async () => {
-          // console.log("🧪 Testing endpoint accessibility with axios...");
-          try {
-            const response = await axios.post(
-              `${apiConfig.baseURL}/api/test-beacon`
-            );
-            // console.log("✅ Endpoint accessible via axios:", response.data);
-          } catch (error) {
-            // console.error("❌ Endpoint not accessible via axios:", error);
-          }
-        };
+        // const testEndpoint = async () => {
+        //   // console.log("🧪 Testing endpoint accessibility with axios...");
+        //   try {
+        //     const response = await axios.post(
+        //       `${apiConfig.baseURL}/api/test-beacon`
+        //     );
+        //     // console.log("✅ Endpoint accessible via axios:", response.data);
+        //   } catch (error) {
+        //     // console.error("❌ Endpoint not accessible via axios:", error);
+        //   }
+        // };
 
-        (window as any).testEndpoint = testEndpoint;
+        // (window as any).testEndpoint = testEndpoint;
         // console.log("🧪 Endpoint test available: window.testEndpoint()");
       }
     } else {
