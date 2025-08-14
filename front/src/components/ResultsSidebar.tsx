@@ -1,154 +1,283 @@
-"""
-YOLOv8 model service for dugong and calf detection in aerial images.
-Handles model inference and detection result processing.
-"""
+/* eslint-disable @typescript-eslint/no-unused-vars */
+import { Info, Shell, Square, Map } from "lucide-react";
+// import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+// import { useUploadStore } from "@/store/upload";
 
-from pathlib import Path
-from ultralytics import YOLO
-from core.config import BASE_DIR
-from core.logger import setup_logger
-from typing import List, Tuple
-import requests
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
-import numpy as np
-import torch
-import os
-import cv2
+const FloatingBubble = ({ size = "small", delay = 0 }) => (
+  <div
+    className={`absolute rounded-full bg-gradient-to-t from-cyan-200/20 to-blue-200/40 animate-pulse ${
+      size === "small" ? "w-3 h-3" : size === "medium" ? "w-5 h-5" : "w-7 h-7"
+    }`}
+    style={{
+      animationDelay: `${delay}s`,
+      animationDuration: `${3 + Math.random() * 2}s`,
+    }}
+  />
+);
+interface ImageData {
+  imageId: string;
+  imageUrl: string;
+  dugongCount: number;
+  motherCalfCount: number;
+  imageClass?: string;
+  createdAt?: string;
+}
 
-logger = setup_logger("model_service", "logs/model_service.log")
+interface ResultsSidebarProps {
+  currentImageData: ImageData;
+  markedPoorImages: string[];
+  onMarkPoor: (imageId: string) => void;
+}
+const extractFormattedDate = (imageName: string) => {
+  // Regular expression to match the pattern after first underscore with 8 digits (assumed to be YYYYMMDD)
+  const match = imageName.match(/_(\d{8})/);
 
-url = "https://storage.googleapis.com/dugong_models/best.pt"
+  if (!match || match.length < 2) return "not found";
 
-response = requests.get(url)
-# Save to disk
-with open("MLmodel.pt", "wb") as f:
-    f.write(response.content)
-model = YOLO("MLmodel.pt")
+  const rawDate = match[1];
+  const year = rawDate.substring(0, 4);
+  const month = rawDate.substring(4, 6);
+  const day = rawDate.substring(6, 8);
 
-url = "https://storage.googleapis.com/dugong_models/classification_model.pt"
-response = requests.get(url)
-# Save to disk
-with open("classification_model.pt", "wb") as f:
-    f.write(response.content)
-    
-classification_model = YOLO("classification_model.pt")
+  // Basic date validation (not checking leap years, etc., but enough to catch typos)
+  const dateObject = new Date(`${year}-${month}-${day}`);
+  if (
+    dateObject.getFullYear().toString() !== year ||
+    (dateObject.getMonth() + 1).toString().padStart(2, "0") !== month ||
+    dateObject.getDate().toString().padStart(2, "0") !== day
+  ) {
+    return "not found";
+  }
 
+  return `${day}/${month}/${year}`;
+};
+const ResultsSidebar = ({
+  currentImageData,
+  // markedPoorImages,
+}: ResultsSidebarProps) => {
+  // const sessionId = useUploadStore((state) => state.sessionId);
+  // const isMarkedPoor =
+  //   currentImageData && markedPoorImages.includes(currentImageData.imageId);
 
-def fully_dynamic_nms(preds, iou_min=0.1, iou_max=0.6):
-    from ultralytics.engine.results import Boxes
+  // const handleMarkPoor = async () => {
+  //   if (!currentImageData || !sessionId) {
+  //     return;
+  //   }
 
-    processed_results = []
-    for res in preds:
-        if res is None or not len(res.boxes):
-            processed_results.append(res)
-            continue
+  //   if (
+  //     window.confirm("Are you sure? You cannot change your decision later.")
+  //   ) {
+  //     const targetClass = currentImageData?.imageClass;
+  //     const imageName = currentImageData.imageUrl.split("/").pop();
 
-        boxes = res.boxes.xyxy.cpu()
-        scores = res.boxes.conf.cpu()
-        cls = res.boxes.cls.cpu() if hasattr(res.boxes, 'cls') else torch.zeros_like(scores)
+  //     try {
+  //       const response = await fetch(`/api/move-to-false-positive/`, {
+  //         method: "POST",
+  //         headers: {
+  //           "Content-Type": "application/json",
+  //         },
+  //         body: JSON.stringify({
+  //           sessionId,
+  //           imageName,
+  //           targetClass,
+  //         }),
+  //       });
 
-        if boxes.numel() == 0:
-            processed_results.append(res)
-            continue
+  //       if (response.ok) {
+  //         onMarkPoor(currentImageData.imageId);
+  //       }
+  //     } catch (error) {
+  //       // console.error("Error:", error);
+  //     }
+  //   }
+  // };
+  const getBehaviorLabel = (imageClass?: string): string => {
+    if (!imageClass) return "N/A";
+    const normalized = imageClass.trim().toLowerCase();
+    if (normalized === "resting") return "Resting";
+    if (normalized === "feeding") return "Feeding";
+    return imageClass;
+  };
 
-        if res.orig_img is not None:
-            img_height, img_width = res.orig_img.shape[:2]
-        else:
-            img_height, img_width = 1, 1
+  return (
+    <div className="w-full min-h-screen  p-3 relative overflow-hidden">
+      {/* Floating Bubbles */}
+      <div className="fixed inset-0 pointer-events-none">
+        <FloatingBubble size="small" delay={0} />
+        <FloatingBubble size="medium" delay={1} />
+        <FloatingBubble size="large" delay={2} />
+      </div>
 
-        heights = boxes[:, 3] - boxes[:, 1]
-        widths = boxes[:, 2] - boxes[:, 0]
-        sizes = torch.sqrt(heights * widths)
-        median_size = float(torch.median(sizes))
-        min_size, max_size = 10, 200
-        clipped_size = np.clip(median_size, min_size, max_size)
-        relative_size = (clipped_size - min_size) / (max_size - min_size)
-        iou_thr = iou_max - relative_size * (iou_max - iou_min)
-        print(f"[{os.path.basename(res.path)}] Median size: {median_size:.2f}, IoU: {iou_thr:.3f}, Relative size : {relative_size}")
-        keep = torch.ops.torchvision.nms(boxes, scores, float(iou_thr))
+      {/* Coral Pattern Background */}
+      <div className="fixed inset-0 pointer-events-none opacity-5">
+        <div className="absolute top-10 left-10 w-20 h-20 bg-orange-400 rounded-full blur-xl"></div>
+        <div className="absolute top-40 right-10 w-32 h-32 bg-pink-400 rounded-full blur-xl"></div>
+        <div className="absolute bottom-40 left-20 w-24 h-24 bg-purple-400 rounded-full blur-xl"></div>
+      </div>
 
-        kept_boxes = boxes[keep]
-        kept_scores = scores[keep].unsqueeze(1)
-        kept_cls = cls[keep].unsqueeze(1)
-        final_data = torch.cat([kept_boxes, kept_scores, kept_cls], dim=1).to(res.boxes.data.device)
+      <div className="w-full flex flex-col gap-3 relative z-10">
+        {/* Detection Results */}
+        <Card className="bg-white/80 backdrop-blur-sm border-2 border-teal-200/50 shadow-xl hover:shadow-2xl transition-all duration-300 relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-teal-400 via-cyan-400 to-blue-500"></div>
+          <CardHeader className="bg-gradient-to-r from-teal-50/80 to-cyan-50/80 relative py-2">
+            <CardTitle className="flex items-center gap-2 text-lg font-semibold text-teal-800">
+              <div className="p-1.5 bg-teal-100 rounded-full shadow-md">
+                <Shell className="w-4 h-4 text-teal-600" />
+              </div>
+              Detection Results
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2 py-3 px-4">
+            <div className="flex justify-between items-center p-2 bg-gradient-to-r from-teal-50 to-cyan-50 rounded-lg border border-teal-200/50 hover:border-teal-300 transition-colors">
+              <span className="text-sm font-medium text-slate-700">
+                Dugong Count
+              </span>
+              <Badge className="text-sm bg-gradient-to-r from-teal-500 to-cyan-500 text-white border-none shadow-md hover:shadow-lg transition-shadow">
+                {currentImageData?.dugongCount || 0}
+              </Badge>
+            </div>
+            <div className="flex justify-between items-center p-2 bg-gradient-to-r from-teal-50 to-cyan-50 rounded-lg border border-teal-200/50 hover:border-teal-300 transition-colors">
+              <span className="text-sm font-medium text-slate-700">
+                Mother Calf Count
+              </span>
+              <Badge className="text-sm bg-gradient-to-r from-teal-500 to-cyan-500 text-white border-none shadow-md hover:shadow-lg transition-shadow">
+                {currentImageData?.motherCalfCount || 0}
+              </Badge>
+            </div>
+            <div className="flex justify-between items-center p-2 bg-gradient-to-r from-cyan-50 to-sky-50 rounded-lg border border-cyan-200/50 hover:border-cyan-300 transition-colors">
+              <div className="flex items-center gap-1">
+                <span className="text-sm font-medium text-slate-700">
+                  Total Count
+                </span>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        className="p-0.5 rounded-full hover:bg-cyan-100 transition-colors focus:outline-none focus:ring-2 focus:ring-cyan-300 focus:ring-offset-1"
+                        aria-label="Information about total count calculation"
+                      >
+                        <Info className="w-4 h-4 text-cyan-600 hover:text-cyan-700 cursor-pointer" />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent className="max-w-xs text-sm text-slate-600 p-3">
+                      <div className="space-y-2">
+                        <p className="font-medium text-slate-800">
+                          {" "}
+                          Total Count Calculation Formula:
+                        </p>
+                        <div className="bg-slate-50 p-2 rounded text-xs font-mono">
+                          (2 × Mother Calf Count) + Dugong Count
+                        </div>
+                        <p className="text-xs text-slate-500">
+                          Each calf is counted as 2 in the total calculation
+                        </p>
+                      </div>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
+              <Badge className="text-sm bg-gradient-to-r from-cyan-500 to-blue-500 text-white border-none shadow-md hover:shadow-lg transition-shadow">
+                {(currentImageData?.motherCalfCount
+                  ? 2 * currentImageData.motherCalfCount
+                  : 0) + (currentImageData?.dugongCount || 0)}
+              </Badge>
+            </div>
+            <div className="flex justify-between items-center p-2 bg-gradient-to-r from-teal-50 to-cyan-50 rounded-lg border border-teal-200/50 hover:border-teal-300 transition-colors">
+              <span className="text-sm font-medium text-slate-700">
+                Behaviour
+              </span>
+              <Badge className="text-sm bg-gradient-to-r from-orange-400 to-pink-400 text-white border-none shadow-md hover:shadow-lg transition-shadow">
+                {getBehaviorLabel(currentImageData?.imageClass)}
+              </Badge>
+            </div>
+          </CardContent>
+        </Card>
 
-        res.boxes = Boxes(final_data, orig_shape=res.orig_shape)
-        processed_results.append(res)
+        {/* Meta Data */}
+        <Card className="bg-white/80 backdrop-blur-sm border-2 border-teal-200/50 shadow-xl hover:shadow-2xl transition-all duration-300 relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-400 via-teal-400 to-cyan-500"></div>
+          <CardHeader className="bg-gradient-to-r from-blue-50/80 to-teal-50/80 relative py-2">
+            <CardTitle className="flex items-center gap-2 text-lg font-semibold text-blue-800">
+              <div className="p-1.5 bg-blue-100 rounded-full shadow-md">
+                <Info className="w-4 h-4 text-blue-600" />
+              </div>
+              Meta Data
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2 py-3 px-4">
+            <div className="flex justify-between items-center p-2 bg-gradient-to-r from-blue-50 to-teal-50 rounded-lg border border-blue-200/50 hover:border-blue-300 transition-colors">
+              <span className="text-sm font-medium text-slate-700">
+                Captured Date
+              </span>
+              <Badge className="text-sm bg-gradient-to-r from-blue-500 to-teal-500 text-white border-none shadow-md hover:shadow-lg transition-shadow">
+                {extractFormattedDate(
+                  currentImageData?.imageUrl.split("/").pop() || ""
+                )}
+              </Badge>
+            </div>
+            <div className="flex justify-between items-center p-2 bg-gradient-to-r from-blue-50 to-teal-50 rounded-lg border border-blue-200/50 hover:border-blue-300 transition-colors">
+              <span className="text-sm font-medium text-slate-700">
+                Processed Date
+              </span>
+              <Badge className="text-sm bg-gradient-to-r from-blue-500 to-teal-500 text-white border-none shadow-md hover:shadow-lg transition-shadow">
+                {currentImageData?.createdAt
+                  ? new Date(currentImageData.createdAt).toLocaleDateString()
+                  : new Date().toLocaleDateString()}
+              </Badge>
+            </div>
+            <div className="flex justify-between items-center p-2 bg-gradient-to-r from-blue-50 to-teal-50 rounded-lg border border-blue-200/50 hover:border-blue-300 transition-colors">
+              <span className="text-sm font-medium text-slate-700">
+                Image Name
+              </span>
+              <Badge
+                className="max-w-[120px] text-xs bg-gradient-to-r from-slate-500 to-teal-600 text-white border-none shadow-md hover:shadow-lg transition-shadow truncate"
+                title={
+                  currentImageData?.imageUrl
+                    ? currentImageData.imageUrl.split("/").pop()
+                    : "image.jpg"
+                }
+              >
+                {currentImageData?.imageUrl
+                  ? currentImageData.imageUrl.split("/").pop()
+                  : "image.jpg"}
+              </Badge>
+            </div>
+          </CardContent>
+        </Card>
 
-    return processed_results
+        <Card className="bg-white/80 backdrop-blur-sm border-2 border-teal-200/50 shadow-xl hover:shadow-2xl transition-all duration-300 relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-400"></div>
+          <CardHeader className="bg-gradient-to-r from-blue-50/80 to-indigo-50/80 relative py-2">
+            <CardTitle className="flex items-center gap-2 text-lg font-semibold text-blue-800">
+              <div className="p-1.5 bg-blue-100 rounded-full shadow-md">
+                <Map className="w-4 h-4 text-blue-600" />
+              </div>
+              Legend
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="py-3 px-4 space-y-3">
+            <div className="flex w-full items-center justify-between">
+              <span className="text-sm text-slate-700">Dugong</span>
+              <Square className="w-4 h-4 text-blue-600" />
+            </div>
+            <div className="flex w-full items-center justify-between">
+              <span className="text-sm text-slate-700">Mother Calf</span>
+              <Square className="w-4 h-4 text-red-600" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+};
 
-def run_model_on_images(
-    image_paths: List[Path], session_id: str
-) -> List[Tuple[int, int, str, Path]]:
-    """
-    Run dugong detection model on a batch of images and save detection results.
-    Also saves images with colored bounding boxes after dynamic NMS.
-    """
-    results = []
-    logger.info(f"Running model on batch: {[str(p) for p in image_paths]}")
-    # 1. Perform prediction to get the initial results
-    batch_results = model.predict(
-        source=[str(p) for p in image_paths],
-        conf=0.3,
-        save=False,
-        show_labels=False,
-        show_conf=False,
-        project=None,
-        name=None,
-        iou=0.3,
-        max_det=1000
-    )
-
-    # 2. Apply the custom NMS function to the results
-    processed_results = fully_dynamic_nms(batch_results)
-
-    # 3. Prepare output folders
-    label_dir = BASE_DIR / session_id / "labels"
-    label_dir.mkdir(parents=True, exist_ok=True)
-    final_results_folder = BASE_DIR / session_id / "images"
-    final_results_folder.mkdir(parents=True, exist_ok=True)
-
-    # Define colors for classes (B, G, R)
-    color_map = {
-        0: (255, 0, 0),   # Blue for Dugong (class 0)
-        1: (0, 0, 255)    # Red for Calf (class 1)
-    }
-
-    for image_path, res in zip(image_paths, processed_results):
-        class_ids = res.boxes.cls.int().tolist() if res.boxes is not None else []
-        dugong_count = class_ids.count(0)
-        calf_count = class_ids.count(1)
-        # find the class of the image
-        temp_results = classification_model.predict(image_path,  save=False,show_conf=False,project=None)
-        top5_class_names = temp_results[0].names
-        top1_class_id = temp_results[0].probs.top1
-        image_class = top5_class_names[top1_class_id]
-        label_path = label_dir / f"{image_path.stem}.txt"
-
-        try:
-            with open(label_path, "w") as f:
-                for box, cls_id in zip(res.boxes.xywhn, res.boxes.cls.int()):
-                    cx, cy, w, h = box.tolist()
-                    f.write(f"{cls_id} {cx:.6f} {cy:.6f} {w:.6f} {h:.6f}\n")
-            logger.info(f"Saved label file: {label_path}")
-        except Exception as e:
-            logger.error(f"Failed to save label for {image_path.name}: {e}")
-            raise
-
-        # Save image with colored bounding boxes
-        img = cv2.imread(str(image_path))
-        if img is not None and len(res.boxes) > 0:
-            boxes = res.boxes.xyxy.cpu().numpy()
-            classes = res.boxes.cls.cpu().numpy().astype(int)
-            for box, cls in zip(boxes, classes):
-                x1, y1, x2, y2 = map(int, box)
-                color = color_map.get(cls, (0, 255, 0))
-                cv2.rectangle(img, (x1, y1), (x2, y2), color, 2)
-        save_path = final_results_folder / image_path.name
-        cv2.imwrite(str(save_path), img)
-        logger.info(f"Saved image with NMS and colored boxes: {save_path}")
-
-        results.append((dugong_count, calf_count, image_class, save_path))
-
-    logger.info(f"Images with bounding boxes saved to {final_results_folder}")
-    return results
+export default ResultsSidebar;
