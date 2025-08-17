@@ -79,7 +79,7 @@ const DashboardPage = () => {
             createdAt:
               (data as any)?.uploadedAt || metadata?.last_activity || "",
             dugongCount: (data as any)?.dugongCount ?? 0,
-            calfCount: (data as any)?.calfCount ?? 0,
+            motherCalfCount: (data as any)?.motherCalfCount ?? 0,
             imageClass: (data as any)?.imageClass ?? "N/A",
           };
         });

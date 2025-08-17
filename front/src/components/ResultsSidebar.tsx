@@ -21,7 +21,7 @@ interface ImageData {
   imageId: string;
   imageUrl: string;
   dugongCount: number;
-  calfCount: number;
+  motherCalfCount: number;
   imageClass?: string;
   createdAt?: string;
 }
@@ -146,40 +146,40 @@ const ResultsSidebar = ({
                 Mother Calf Count
               </span>
               <Badge className="text-sm bg-gradient-to-r from-teal-500 to-cyan-500 text-white border-none shadow-md hover:shadow-lg transition-shadow">
-                {currentImageData?.calfCount || 0}
+                {currentImageData?.motherCalfCount || 0}
               </Badge>
             </div>
             <div className="flex justify-between items-center p-2 bg-gradient-to-r from-cyan-50 to-sky-50 rounded-lg border border-cyan-200/50 hover:border-cyan-300 transition-colors">
-      <div className="flex items-center gap-1">
-        <span className="text-sm font-medium text-slate-700">Total Count</span>
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button 
-                className="p-0.5 rounded-full hover:bg-cyan-100 transition-colors focus:outline-none focus:ring-2 focus:ring-cyan-300 focus:ring-offset-1"
-                aria-label="Information about total count calculation"
-              >
-                <Info className="w-4 h-4 text-cyan-600 hover:text-cyan-700 cursor-pointer" />
-              </button>
-            </TooltipTrigger>
-            <TooltipContent className="max-w-xs text-sm text-slate-600 p-3">
-              <div className="space-y-2">
-                <p className="font-medium text-slate-800"> Total Count Calculation Formula:</p>
-                <div className="bg-slate-50 p-2 rounded text-xs font-mono">
-                  (2 × Mother Calf Count) + Dugong Count
-                </div>
-                <p className="text-xs text-slate-500">
-                  Each calf is counted as 2 in the total calculation
-                </p>
+              <div className="flex items-center gap-1">
+                <span className="text-sm font-medium text-slate-700">Total Count</span>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        className="p-0.5 rounded-full hover:bg-cyan-100 transition-colors focus:outline-none focus:ring-2 focus:ring-cyan-300 focus:ring-offset-1"
+                        aria-label="Information about total count calculation"
+                      >
+                        <Info className="w-4 h-4 text-cyan-600 hover:text-cyan-700 cursor-pointer" />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent className="max-w-xs text-sm text-slate-600 p-3">
+                      <div className="space-y-2">
+                        <p className="font-medium text-slate-800"> Total Count Calculation Formula:</p>
+                        <div className="bg-slate-50 p-2 rounded text-xs font-mono">
+                          (2 × Mother Calf Count) + Dugong Count
+                        </div>
+                        <p className="text-xs text-slate-500">
+                          Each calf is counted as 2 in the total calculation
+                        </p>
+                      </div>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </div>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-      </div>
-      <Badge className="text-sm bg-gradient-to-r from-cyan-500 to-blue-500 text-white border-none shadow-md hover:shadow-lg transition-shadow">
-        {(currentImageData?.calfCount ? 2 * currentImageData.calfCount : 0) + (currentImageData?.dugongCount || 0)}
-      </Badge>
-    </div>
+              <Badge className="text-sm bg-gradient-to-r from-cyan-500 to-blue-500 text-white border-none shadow-md hover:shadow-lg transition-shadow">
+                {(currentImageData?.motherCalfCount ? 2 * currentImageData.motherCalfCount : 0) + (currentImageData?.dugongCount || 0)}
+              </Badge>
+            </div>
             <div className="flex justify-between items-center p-2 bg-gradient-to-r from-teal-50 to-cyan-50 rounded-lg border border-teal-200/50 hover:border-teal-300 transition-colors">
               <span className="text-sm font-medium text-slate-700">
                 Behaviour
