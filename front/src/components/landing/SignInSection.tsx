@@ -5,6 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useMutation } from "@tanstack/react-query";
 import { useAuthStore } from "@/store/auth";
+import { useUploadStore } from "@/store/upload";
 import axios from "axios";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -39,10 +40,8 @@ interface ApiError {
 
 const SignInSection = () => {
   const navigate = useNavigate();
-  const setToken = useAuthStore((state) => state.setToken);
-  const setUsername = useAuthStore((state) => state.setUsername);
-  const setEmail = useAuthStore((state) => state.setEmail);
-  const setSessionId = useAuthStore((state) => state.setSessionId);
+  const { setToken, setUsername, setEmail, setSessionId } = useAuthStore();
+  const { setSessionId: setUploadSessionId } = useUploadStore();
   const [showPassword, setShowPassword] = useState(false);
 
   const {
@@ -88,6 +87,11 @@ const SignInSection = () => {
         throw new Error("Network error. Please try again.");
       }
     },
+    onError: (error: ApiError) => {
+      const errorMessage =
+        error.detail || error.message || error.error || "Login failed";
+      toast.error(errorMessage);
+    },
     onSuccess: (data: LoginResponse & { session_id?: string }) => {
       const token = data.access_token || data.token;
 
@@ -103,6 +107,7 @@ const SignInSection = () => {
           setEmail(data.email || "user@gmail.com");
           if (data.session_id) {
             setSessionId(data.session_id);
+            setUploadSessionId(data.session_id); // Also set in upload store
           }
           toast.success("Logged in successfully");
           navigate("/dashboard", { replace: true });
@@ -180,10 +185,11 @@ const SignInSection = () => {
                   placeholder="Enter your password"
                   autoComplete="current-password"
                   {...register("password")}
-                  className={`pr-10 ${errors.password
-                    ? "border-red-500 focus-visible:ring-red-500"
-                    : "border-gray-300 focus-visible:ring-blue-500"
-                    }`}
+                  className={`pr-10 ${
+                    errors.password
+                      ? "border-red-500 focus-visible:ring-red-500"
+                      : "border-gray-300 focus-visible:ring-blue-500"
+                  }`}
                   aria-invalid={errors.password ? "true" : "false"}
                   aria-describedby={
                     errors.password ? "password-error" : undefined

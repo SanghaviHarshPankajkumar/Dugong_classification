@@ -2,6 +2,7 @@ import { Waves, Upload, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ImageUploadDialog from "./imageUploadDialog";
 import { useUploadStore } from "@/store/upload";
+import axios from "axios";
 
 interface DashboardHeaderProps {
   onImageUpload: (response: unknown) => void;
@@ -16,9 +17,11 @@ const DashboardHeader = ({ onImageUpload }: DashboardHeaderProps) => {
       return;
     }
     try {
-      const response = await fetch(`/api/export-session-csv/${sessionId}`);
-      if (!response.ok) throw new Error("Failed to export CSV");
-      const blob = await response.blob();
+      const response = await axios.get(`/api/export-session-csv/${sessionId}`, {
+        responseType: "blob",
+      });
+
+      const blob = response.data;
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;

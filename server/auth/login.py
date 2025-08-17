@@ -1,6 +1,5 @@
 from fastapi import FastAPI, APIRouter, HTTPException
 from pydantic import BaseModel, EmailStr
-from passlib.context import CryptContext
 from jose import jwt
 from datetime import datetime, timedelta
 from pymongo import MongoClient
@@ -8,6 +7,8 @@ from dotenv import load_dotenv
 import certifi
 import os
 import uuid
+import hashlib
+import secrets
 
 # Load environment variables
 load_dotenv()
@@ -21,8 +22,21 @@ SECRET_KEY = os.getenv("SECRET_KEY", "fallback-secret")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60
 
-# Password hashing context
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+# Simple password hashing functions using hashlib
+def hash_password(password: str) -> str:
+    """Hash a password using SHA-256 with salt"""
+    salt = secrets.token_hex(16)
+    hash_obj = hashlib.sha256((password + salt).encode())
+    return f"{salt}${hash_obj.hexdigest()}"
+
+def verify_password(password: str, hashed: str) -> bool:
+    """Verify a password against its hash"""
+    try:
+        salt, hash_value = hashed.split('$', 1)
+        hash_obj = hashlib.sha256((password + salt).encode())
+        return hash_obj.hexdigest() == hash_value
+    except:
+        return False
 
 # MongoDB setup with short timeouts so requests fail fast instead of 502 from the proxy
 client = None
@@ -103,8 +117,8 @@ def login(request: LoginRequest):
         print("Password check starting...")
 
         # Handle both hashed and accidentally stored plaintext passwords (only for dev)
-        if stored_password.startswith("$2b$"):
-            password_valid = pwd_context.verify(request.password, stored_password)
+        if stored_password and '$' in stored_password:
+            password_valid = verify_password(request.password, stored_password)
         else:
             print("WARNING: Plaintext password detected in DB. This is not secure!")
             password_valid = request.password == stored_password
@@ -116,10 +130,9 @@ def login(request: LoginRequest):
         useremail = user.get("email", "")
         
         # --- SESSION ID LOGIC ---
-        session_id = user.get("session_id")
-        if not session_id:
-            session_id = str(uuid.uuid4())
-            user_collection.update_one({"email": request.email}, {"$set": {"session_id": session_id}})
+        # Always generate a new session ID on every login for security
+        session_id = str(uuid.uuid4())
+        user_collection.update_one({"email": request.email}, {"$set": {"session_id": session_id}})
 
         token = create_token(
             {"sub": user["email"]},

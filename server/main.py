@@ -17,9 +17,7 @@ from fastapi.staticfiles import StaticFiles
 # Load environment variables from .env file
 load_dotenv()
 
-
 print(certifi.where())
-
 
 # Get secret key from environment
 SECRET_KEY = os.getenv("SECRET_KEY", "fallback-secret")

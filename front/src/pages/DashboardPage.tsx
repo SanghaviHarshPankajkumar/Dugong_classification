@@ -10,9 +10,9 @@ import { useAuthStore } from "../store/auth";
 import { useUploadStore } from "../store/upload";
 import { useState, useEffect } from "react";
 import axios from "axios";
-
-
-
+import { useNavigationGuard } from "../hooks/useNavigationGuard.ts";
+import ConfirmCloseDialog from "../components/ConfirmCloseDialog.tsx";
+import { getApiConfig } from "@/lib/api-config.ts";
 
 const DashboardPage = () => {
   const {
@@ -27,34 +27,33 @@ const DashboardPage = () => {
 
   const authSessionId = useAuthStore((state) => state.sessionId);
   const uploadSessionId = useUploadStore((state) => state.sessionId);
-  const setUploadSessionId = useUploadStore((state) => state.setSessionId);
 
   const [markedPoorImages, setMarkedPoorImages] = useState<string[]>([]);
   const [isPolling, setIsPolling] = useState(false);
   // const [lastImageCount, setLastImageCount] = useState(0);
 
-  useEffect(() => {
-    if (authSessionId && authSessionId !== uploadSessionId) {
-      setUploadSessionId(authSessionId);
-    }
-  }, [authSessionId, uploadSessionId, setUploadSessionId]);
+  // Use the upload session ID as the primary session ID for the dashboard
+  const currentSessionId = uploadSessionId || authSessionId;
 
+  // Get API configuration for constructing image URLs
+  const apiConfig = getApiConfig();
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+  // Navigation guard for better UX when leaving the dashboard
+  const { showConfirmDialog, confirmNavigation, cancelNavigation } =
+    useNavigationGuard({
+      enabled: !!(currentSessionId && totalImages > 0), // Only guard if there are images
+      title: "Leave Dashboard?",
+      message:
+        "You have uploaded images in this session. Are you sure you want to leave? Your session data will be preserved.",
+      onBeforeNavigate: async () => {
+        // You could add additional checks here, like saving progress
+        return true; // Allow navigation
+      },
+      onConfirmNavigate: () => {
+        // Clean up any temporary state if needed
+        // console.log("User confirmed navigation away from dashboard");
+      },
+    });
 
   // Derived from backend metadata; no explicit type to avoid mismatch warnings
 
@@ -65,25 +64,25 @@ const DashboardPage = () => {
       const metadata = response.data?.metadata;
       const images = metadata?.images as Record<string, any> | undefined;
       if (images && typeof images === "object") {
-        const results = Object.entries(images).map(([fileName, data], idx) => ({
-          imageId: String(idx),
-          imageUrl: `/uploads/${sessionId}/images/${fileName}`,
-          createdAt: (data as any)?.uploadedAt || metadata?.last_activity || "",
-          dugongCount: (data as any)?.dugongCount ?? 0,
-          calfCount: (data as any)?.calfCount ?? 0,
-          imageClass: (data as any)?.imageClass ?? "N/A",
-        }));
+        const results = Object.entries(images).map(([fileName, data], idx) => {
+          const imageUrl = `${apiConfig.baseURL}/uploads/${sessionId}/images/${fileName}`;
 
+          // Debug logging for image URLs
+          if (process.env.NODE_ENV === "development") {
+            // console.log(`🖼️ Constructed image URL for ${fileName}:`, imageUrl);
+          }
 
-
-
-
-
-
-
-
-
-
+          return {
+            imageId: String(idx),
+            // Construct image URL pointing to the backend server
+            imageUrl,
+            createdAt:
+              (data as any)?.uploadedAt || metadata?.last_activity || "",
+            dugongCount: (data as any)?.dugongCount ?? 0,
+            motherCalfCount: (data as any)?.motherCalfCount ?? 0,
+            imageClass: (data as any)?.imageClass ?? "N/A",
+          };
+        });
         setApiResponse({ results });
         return results.length;
       }
@@ -95,11 +94,11 @@ const DashboardPage = () => {
 
   // On dashboard load, fetch all images for the session
   useEffect(() => {
-    if (uploadSessionId) {
-      fetchSessionMetadata(uploadSessionId);
+    if (currentSessionId) {
+      fetchSessionMetadata(currentSessionId);
     }
     // eslint-disable-next-line
-  }, [uploadSessionId]);
+  }, [currentSessionId]);
 
   // Polling function after upload
   const pollForImages = async (sessionId: string, initialCount: number) => {
@@ -122,19 +121,19 @@ const DashboardPage = () => {
 
   // After upload, backfill detection results and poll for all images
   const handleImageUpload = async () => {
-    if (uploadSessionId) {
+    if (currentSessionId) {
       try {
-        await axios.post(`/api/backfill-detections/${uploadSessionId}`);
+        await axios.post(`/api/backfill-detections/${currentSessionId}`);
       } catch (err) {
         // console.error("Failed to backfill detection results", err);
       }
       // Fetch once, then poll for new images
-      const initialCount = await fetchSessionMetadata(uploadSessionId);
+      const initialCount = await fetchSessionMetadata(currentSessionId);
       if ((initialCount || 0) === 0) {
         // If nothing yet, refresh once more after a short delay
-        setTimeout(() => fetchSessionMetadata(uploadSessionId), 1500);
+        setTimeout(() => fetchSessionMetadata(currentSessionId), 1500);
       }
-      pollForImages(uploadSessionId, initialCount || 0);
+      pollForImages(currentSessionId, initialCount || 0);
     }
   };
 
@@ -146,79 +145,72 @@ const DashboardPage = () => {
 
   // If no images uploaded, show empty state
   if (!apiResponse || totalImages === 0) {
-    return <EmptyState onImageUpload={handleImageUpload} />;
-
-
-
-
-
-
-
-
-
-
-
-
-
+    return (
+      <>
+        <EmptyState onImageUpload={handleImageUpload} />
+        <ConfirmCloseDialog
+          isOpen={showConfirmDialog}
+          onClose={cancelNavigation}
+          onConfirm={confirmNavigation}
+          title="Leave Dashboard?"
+          message="You have uploaded images in this session. Are you sure you want to leave? Your session data will be preserved."
+          confirmText="Leave"
+          cancelText="Stay"
+        />
+      </>
+    );
   }
 
   // Main dashboard with images
   return (
-    <div className="min-h-screen relative overflow-hidden">
-      <AnimatedBackground />
-      <Navbar />
+    <>
+      <div className="min-h-screen relative overflow-hidden">
+        <AnimatedBackground />
+        <Navbar />
 
-      <div className="relative z-10 p-6">
-        <DashboardHeader onImageUpload={handleImageUpload} />
+        <div className="relative z-10 p-6">
+          <DashboardHeader onImageUpload={handleImageUpload} />
 
-        {isPolling && (
-          <div className="text-center py-4 text-blue-600 font-semibold animate-pulse">
-            Processing images... Please wait.
-          </div>
-        )}
+          {isPolling && (
+            <div className="text-center py-4 text-blue-600 font-semibold animate-pulse">
+              Processing images... Please wait.
+            </div>
+          )}
 
-        {/* Main Content */}
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          {/* Left Section - Image Display */}
-          <div className="lg:col-span-3">
-            <ImageViewer
-              currentImage={currentImage}
-              totalImages={totalImages}
+          {/* Main Content */}
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+            {/* Left Section - Image Display */}
+            <div className="lg:col-span-3">
+              <ImageViewer
+                currentImage={currentImage}
+                totalImages={totalImages}
+                currentImageData={currentImageData}
+                onPrevious={handlePrevious}
+                onNext={handleNext}
+              />
+            </div>
 
-
-
-
-
-
-
-
-
+            {/* Right Section - Results */}
+            <ResultsSidebar
               currentImageData={currentImageData}
-              onPrevious={handlePrevious}
-              onNext={handleNext}
+              markedPoorImages={markedPoorImages}
+              onMarkPoor={handleMarkPoor}
             />
           </div>
-
-          {/* Right Section - Results */}
-          <ResultsSidebar
-            currentImageData={currentImageData}
-            markedPoorImages={markedPoorImages}
-            onMarkPoor={handleMarkPoor}
-          />
         </div>
       </div>
-    </div>
 
-
-
-
-
-
-
-
-
-
-
+      {/* Navigation Guard Confirmation Dialog */}
+      <ConfirmCloseDialog
+        isOpen={showConfirmDialog}
+        onClose={cancelNavigation}
+        onConfirm={confirmNavigation}
+        title="Leave Dashboard?"
+        message="You have uploaded images in this session. Are you sure you want to leave? Your session data will be preserved."
+        confirmText="Leave"
+        cancelText="Stay"
+      />
+    </>
   );
 };
 

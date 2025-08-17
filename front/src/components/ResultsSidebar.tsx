@@ -5,21 +5,15 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 // import { useUploadStore } from "@/store/upload";
 
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 const FloatingBubble = ({ size = "small", delay = 0 }) => (
   <div
-    className={`absolute rounded-full bg-gradient-to-t from-cyan-200/20 to-blue-200/40 animate-pulse ${
-      size === "small" ? "w-3 h-3" : size === "medium" ? "w-5 h-5" : "w-7 h-7"
-    }`}
+    className={`absolute rounded-full bg-gradient-to-t from-cyan-200/20 to-blue-200/40 animate-pulse ${size === "small" ? "w-3 h-3" : size === "medium" ? "w-5 h-5" : "w-7 h-7"
+      }`}
     style={{
       animationDelay: `${delay}s`,
-      animationDuration: `${3 + Math.random() * 2}s`,
+      animationDuration: `${3 + Math.random() * 2}s`
     }}
   />
 );
@@ -67,6 +61,8 @@ const ResultsSidebar = ({
   // const sessionId = useUploadStore((state) => state.sessionId);
   // const isMarkedPoor =
   //   currentImageData && markedPoorImages.includes(currentImageData.imageId);
+
+
 
   // const handleMarkPoor = async () => {
   //   if (!currentImageData || !sessionId) {
@@ -155,9 +151,7 @@ const ResultsSidebar = ({
             </div>
             <div className="flex justify-between items-center p-2 bg-gradient-to-r from-cyan-50 to-sky-50 rounded-lg border border-cyan-200/50 hover:border-cyan-300 transition-colors">
               <div className="flex items-center gap-1">
-                <span className="text-sm font-medium text-slate-700">
-                  Total Count
-                </span>
+                <span className="text-sm font-medium text-slate-700">Total Count</span>
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger asChild>
@@ -170,10 +164,7 @@ const ResultsSidebar = ({
                     </TooltipTrigger>
                     <TooltipContent className="max-w-xs text-sm text-slate-600 p-3">
                       <div className="space-y-2">
-                        <p className="font-medium text-slate-800">
-                          {" "}
-                          Total Count Calculation Formula:
-                        </p>
+                        <p className="font-medium text-slate-800"> Total Count Calculation Formula:</p>
                         <div className="bg-slate-50 p-2 rounded text-xs font-mono">
                           (2 × Mother Calf Count) + Dugong Count
                         </div>
@@ -186,9 +177,7 @@ const ResultsSidebar = ({
                 </TooltipProvider>
               </div>
               <Badge className="text-sm bg-gradient-to-r from-cyan-500 to-blue-500 text-white border-none shadow-md hover:shadow-lg transition-shadow">
-                {(currentImageData?.motherCalfCount
-                  ? 2 * currentImageData.motherCalfCount
-                  : 0) + (currentImageData?.dugongCount || 0)}
+                {(currentImageData?.motherCalfCount ? 2 * currentImageData.motherCalfCount : 0) + (currentImageData?.dugongCount || 0)}
               </Badge>
             </div>
             <div className="flex justify-between items-center p-2 bg-gradient-to-r from-teal-50 to-cyan-50 rounded-lg border border-teal-200/50 hover:border-teal-300 transition-colors">
@@ -275,6 +264,7 @@ const ResultsSidebar = ({
             </div>
           </CardContent>
         </Card>
+
       </div>
     </div>
   );

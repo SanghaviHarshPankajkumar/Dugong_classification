@@ -47,20 +47,28 @@ const Navbar: React.FC<NavbarProps> = ({ imageCount = 0 }) => {
   const { sessionId, sessionStartTime } = useUploadStore();
   const { username: userName, email: userEmail } = useAuthStore();
 
-
   const handleLogout = React.useCallback(async () => {
     try {
       // Call backend cleanup endpoint before logging out
-      if (userEmail && sessionId) {
-        await axios.delete(`/api/cleanup-sessions/${userEmail}`);
+      if (sessionId) {
+        await axios.delete(`/api/cleanup-session/${sessionId}`);
+        // console.log("Session cleanup successful on logout");
       }
     } catch (err) {
-      // console.error("Cleanup on logout failed", err);
+      // Log error but don't block logout
+      if (axios.isAxiosError(err)) {
+        // console.log(
+        //   `Cleanup on logout failed: ${err.response?.status || "Network Error"}`
+        // );
+      } else {
+        // console.log("Cleanup on logout failed");
+      }
     }
     // Clear all stores and localStorage
     Cookies.remove("access_token");
     useAuthStore.getState().clearStore();
     useImageStore.getState().clearStore();
+    useUploadStore.getState().clearStore(); // Also clear upload store
     if (useImageStore) {
       useImageStore.getState().setApiResponse(null);
     }
@@ -69,11 +77,27 @@ const Navbar: React.FC<NavbarProps> = ({ imageCount = 0 }) => {
     localStorage.removeItem("upload-store");
     localStorage.removeItem("image-storage");
     navigate("/");
-  }, [userEmail, sessionId, navigate]);
+  }, [sessionId, navigate]);
 
-  const handleSessionExpiry = React.useCallback(() => {
+  const handleSessionExpiry = React.useCallback(async () => {
+    try {
+      // Clean up session folder when session expires
+      if (sessionId) {
+        await axios.delete(`/api/cleanup-session/${sessionId}`);
+        // console.log("Session cleanup successful on expiry");
+      }
+    } catch (err) {
+      // Log error but don't block session expiry
+      if (axios.isAxiosError(err)) {
+        // console.log(
+        //   `Cleanup on session expiry failed: ${err.response?.status || "Network Error"}`
+        // );
+      } else {
+        // console.log("Cleanup on session expiry failed");
+      }
+    }
     handleLogout();
-  }, [handleLogout]);
+  }, [handleLogout, sessionId]);
 
   // Update session timer every second
   useEffect(() => {
@@ -85,7 +109,6 @@ const Navbar: React.FC<NavbarProps> = ({ imageCount = 0 }) => {
 
         if (remaining === 0 && !isSessionExpired) {
           setIsSessionExpired(true);
-          // Auto logout when session expires
           handleSessionExpiry();
         }
       }
@@ -133,7 +156,9 @@ const Navbar: React.FC<NavbarProps> = ({ imageCount = 0 }) => {
             {sessionId && sessionStartTime && (
               <div className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1 bg-slate-50 border border-slate-200 rounded-full">
                 <Clock className="w-3 h-3 sm:w-4 sm:h-4 text-slate-600 flex-shrink-0" />
-                <span className={`text-xs sm:text-sm font-medium ${getTimerColor()} whitespace-nowrap`}>
+                <span
+                  className={`text-xs sm:text-sm font-medium ${getTimerColor()} whitespace-nowrap`}
+                >
                   {formatTimeRemaining(sessionTimeLeft)}
                 </span>
               </div>

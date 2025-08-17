@@ -57,7 +57,7 @@ async def upload_multiple(session_id: str = Form(...), files: List[UploadFile] =
         for filename, (dugong_count, calf_count, image_class, _) in zip(file_names, results):
             metadata["images"][filename] = {
                 "dugongCount": dugong_count,
-                "calfCount": calf_count,
+                "motherCalfCount": calf_count,
                 "imageClass": image_class,
                 "uploadedAt": datetime.utcnow().isoformat()
             }
@@ -107,19 +107,111 @@ async def cleanup_sessions(user_email: str):
     """Delete all local session folders for a given user."""
     try:
         deleted_sessions = []
-        for session_dir in BASE_DIR.iterdir():
-            if session_dir.is_dir():
-                shutil.rmtree(session_dir)
-                deleted_sessions.append(session_dir.name)
-
-        return {"deleted_sessions": deleted_sessions, "message": "Local session cleanup completed."}
+        
+        # Since we can't import from auth.login here due to circular imports,
+        # we'll rely on the frontend to pass the session ID or use a different approach
+        # For now, we'll clean up any session folders that might exist
+        # The frontend should call cleanup-session/{session_id} instead
+        
+        return {"deleted_sessions": deleted_sessions, "message": "Use cleanup-session/{session_id} endpoint for specific session cleanup"}
 
     except Exception as e:
         logger.error(f"[Error in cleanup-sessions] {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
-# @router.post("/mov    e-to-false-positive/")
+@router.delete("/cleanup-session/{session_id}")
+async def cleanup_session_by_id(session_id: str):
+    """Delete a specific session folder by session ID."""
+    try:
+        session_dir = BASE_DIR / session_id
+        if not session_dir.exists():
+            return {"message": f"Session {session_id} not found"}
+
+        if not session_dir.is_dir():
+            raise HTTPException(status_code=400, detail=f"{session_id} is not a directory")
+
+        shutil.rmtree(session_dir)
+
+        # Also remove the session_id from any user documents that might have it
+        from auth.login import client, user_collection
+        if client and user_collection:
+            user_collection.update_many(
+                {"session_id": session_id},
+                {"$unset": {"session_id": ""}}
+            )
+
+        return {"message": f"Session {session_id} deleted successfully"}
+
+    except Exception as e:
+        logger.error(f"[Error in cleanup-session] {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/cleanup-session-beacon")
+async def cleanup_session_beacon(session_id: str = Form(...), source: str = Form("tab_close")):
+    """
+    Handle session cleanup via navigator.sendBeacon during tab close.
+    This endpoint is designed to be more reliable during page unload.
+    """
+    try:
+        logger.info(f"[Beacon Cleanup] Received cleanup request for session {session_id} from {source}")
+        logger.info(f"[Beacon Cleanup] BASE_DIR: {BASE_DIR}")
+        logger.info(f"[Beacon Cleanup] Session directory path: {BASE_DIR / session_id}")
+        
+        session_dir = BASE_DIR / session_id
+        if not session_dir.exists():
+            logger.info(f"[Beacon Cleanup] Session {session_id} not found, nothing to cleanup")
+            logger.info(f"[Beacon Cleanup] Directory does not exist: {session_dir}")
+            return {"message": f"Session {session_id} not found"}
+
+        if not session_dir.is_dir():
+            logger.warning(f"[Beacon Cleanup] {session_id} is not a directory")
+            return {"message": f"{session_id} is not a directory"}
+
+        # Log what we're about to delete
+        logger.info(f"[Beacon Cleanup] About to delete session directory: {session_dir}")
+        logger.info(f"[Beacon Cleanup] Directory contents before deletion:")
+        try:
+            for item in session_dir.rglob('*'):
+                logger.info(f"[Beacon Cleanup]   {item}")
+        except Exception as e:
+            logger.warning(f"[Beacon Cleanup] Could not list directory contents: {e}")
+
+        # Delete the session directory
+        shutil.rmtree(session_dir)
+        logger.info(f"[Beacon Cleanup] Successfully deleted session directory: {session_id}")
+
+        # Verify deletion
+        if session_dir.exists():
+            logger.error(f"[Beacon Cleanup] FAILED: Session directory still exists after deletion: {session_dir}")
+        else:
+            logger.info(f"[Beacon Cleanup] SUCCESS: Session directory confirmed deleted: {session_dir}")
+
+        # Also remove the session_id from any user documents that might have it
+        try:
+            from auth.login import client, user_collection
+            if client and user_collection:
+                result = user_collection.update_many(
+                    {"session_id": session_id},
+                    {"$unset": {"session_id": ""}}
+                )
+                logger.info(f"[Beacon Cleanup] Updated {result.modified_count} user documents")
+        except Exception as user_update_error:
+            logger.warning(f"[Beacon Cleanup] Failed to update user documents: {user_update_error}")
+
+        return {"message": f"Session {session_id} cleaned up successfully via beacon"}
+
+    except Exception as e:
+        logger.error(f"[Beacon Cleanup Error] {e}")
+        logger.error(f"[Beacon Cleanup Error] Exception type: {type(e)}")
+        logger.error(f"[Beacon Cleanup Error] Exception details: {str(e)}")
+        # For beacon requests, we return success even on error to avoid blocking the unload
+        return {"message": f"Cleanup attempted for session {session_id}"}
+
+
+
+# @router.post("/move-to-false-positive/")
 # async def move_to_false_positive(request: MoveImageRequest):
 #     """Move an image between classification folders locally."""
 #     try:
@@ -182,7 +274,7 @@ async def backfill_detections(session_id: str):
             total_count = dugong_count + 2 * calf_count
             metadata["images"][file_name] = {
                 "dugongCount": dugong_count,
-                "calfCount": calf_count,
+                "motherCalfCount": calf_count,
                 "imageClass": image_class,
                 "totalCount": total_count,
                 "uploadedAt": datetime.utcnow().isoformat()
@@ -219,7 +311,7 @@ async def export_session_csv(session_id: str):
         for image_name, data in metadata.get("images", {}).items():
             row = {"IMAGE_NAME": image_name, **{k.upper(): v for k, v in data.items()}}
             if "TOTALCOUNT" not in row:
-                row["TOTALCOUNT"] = row.get("DUGONGCOUNT", 0) + 2 * row.get("MOTHERCALFCOUNT", 0)
+                row["TOTALDUGONGCOUNT"] = row.get("DUGONGCOUNT", 0) + 2 * row.get("MOTHERCALFCOUNT", 0)
 
             if writer is None:
                 writer = csv.DictWriter(output, fieldnames=row.keys())
