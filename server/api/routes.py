@@ -8,11 +8,10 @@ import json
 import logging
 import io
 import csv
+import re
 from typing import List
 from core.config import BASE_DIR
 from schemas.request import MoveImageRequest
-# Lazy import to prevent heavy model initialization at app startup.
-# This keeps the backend light so auth and health endpoints work immediately.
 def _run_model_on_images_lazy():
     from services.model_service import run_model_on_images  # type: ignore
     return run_model_on_images
@@ -21,6 +20,30 @@ router = APIRouter()
 logger = logging.getLogger(__name__)
 
 SESSION_TIMEOUT_MINUTES = 30
+
+def extract_captured_date(image_name: str) -> str:
+    """
+    Extract captured date from image filename.
+    Looks for pattern _YYYYMMDD in the filename.
+    Returns formatted date or 'N/A' if not found.
+    """
+    # Regular expression to match the pattern after first underscore with 8 digits (assumed to be YYYYMMDD)
+    match = re.search(r'_(\d{8})', image_name)
+    
+    if not match:
+        return "N/A"
+    
+    raw_date = match.group(1)
+    year = raw_date[:4]
+    month = raw_date[4:6]
+    day = raw_date[6:8]
+    
+    # Basic date validation
+    try:
+        date_object = datetime(int(year), int(month), int(day))
+        return f"{day}/{month}/{year}"
+    except ValueError:
+        return "N/A"
 
 
 class BackfillResponse(BaseModel):
@@ -59,6 +82,7 @@ async def upload_multiple(session_id: str = Form(...), files: List[UploadFile] =
                 "dugongCount": dugong_count,
                 "motherCalfCount": calf_count,
                 "imageClass": image_class,
+                "capturedDate": extract_captured_date(filename),
                 "uploadedAt": datetime.utcnow().isoformat()
             }
 
@@ -276,6 +300,7 @@ async def backfill_detections(session_id: str):
                 "dugongCount": dugong_count,
                 "motherCalfCount": calf_count,
                 "imageClass": image_class,
+                "capturedDate": extract_captured_date(file_name),
                 "totalCount": total_count,
                 "uploadedAt": datetime.utcnow().isoformat()
             }
@@ -290,6 +315,52 @@ async def backfill_detections(session_id: str):
 
     except Exception as e:
         logger.error(f"[Error in backfill-detections] {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.delete("/delete-image/{session_id}/{image_name}")
+async def delete_image(session_id: str, image_name: str):
+    """Delete an image from the session folder and remove it from metadata."""
+    try:
+        session_dir = BASE_DIR / session_id
+        metadata_path = session_dir / "session_metadata.json"
+        image_path = session_dir / "images" / image_name
+
+        # Check if session and metadata exist
+        if not session_dir.exists():
+            raise HTTPException(status_code=404, detail="Session not found")
+        
+        if not metadata_path.exists():
+            raise HTTPException(status_code=404, detail="Session metadata not found")
+
+        # Load metadata
+        with open(metadata_path, "r") as f:
+            metadata = json.load(f)
+
+        # Check if image exists in metadata
+        if image_name not in metadata.get("images", {}):
+            raise HTTPException(status_code=404, detail="Image not found in metadata")
+
+        # Delete the image file if it exists
+        if image_path.exists():
+            image_path.unlink()
+            logger.info(f"Deleted image file: {image_path}")
+
+        # Remove from metadata
+        del metadata["images"][image_name]
+        
+        # Update last activity
+        metadata["last_activity"] = datetime.utcnow().isoformat()
+
+        # Save updated metadata
+        with open(metadata_path, "w") as f:
+            json.dump(metadata, f, indent=4)
+
+        logger.info(f"Deleted image {image_name} from session {session_id}")
+        return {"message": f"Image {image_name} deleted successfully"}
+
+    except Exception as e:
+        logger.error(f"[Error in delete-image] {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -312,6 +383,10 @@ async def export_session_csv(session_id: str):
             row = {"IMAGE_NAME": image_name, **{k.upper(): v for k, v in data.items()}}
             if "TOTALCOUNT" not in row:
                 row["TOTALDUGONGCOUNT"] = row.get("DUGONGCOUNT", 0) + 2 * row.get("MOTHERCALFCOUNT", 0)
+            
+            # Ensure captured date is included, default to "N/A" if not present
+            if "CAPTUREDDATE" not in row:
+                row["CAPTUREDDATE"] = extract_captured_date(image_name)
 
             if writer is None:
                 writer = csv.DictWriter(output, fieldnames=row.keys())

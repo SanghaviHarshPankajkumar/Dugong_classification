@@ -81,6 +81,7 @@ const DashboardPage = () => {
             dugongCount: (data as any)?.dugongCount ?? 0,
             motherCalfCount: (data as any)?.motherCalfCount ?? 0,
             imageClass: (data as any)?.imageClass ?? "N/A",
+            capturedDate: (data as any)?.capturedDate ?? "N/A",
           };
         });
         setApiResponse({ results });
@@ -137,6 +138,34 @@ const DashboardPage = () => {
     }
   };
 
+  // Handle image deletion
+  const handleDeleteImage = async () => {
+    if (!currentSessionId || !currentImageData) {
+      return;
+    }
+
+    try {
+      const imageName = currentImageData.imageUrl?.split("/").pop();
+      if (!imageName) {
+        alert("Could not determine image name");
+        return;
+      }
+
+      await axios.delete(`/api/delete-image/${currentSessionId}/${imageName}`);
+
+      // Refresh the session metadata to update the UI
+      await fetchSessionMetadata(currentSessionId);
+
+      // If we deleted the last image, go to the previous one
+      if (currentImage === totalImages && currentImage > 1) {
+        handlePrevious();
+      }
+    } catch (error) {
+      console.error("Failed to delete image:", error);
+      alert("Failed to delete image. Please try again.");
+    }
+  };
+
   const handleMarkPoor = (imageId: string) => {
     setMarkedPoorImages((prev) => [...prev, imageId]);
   };
@@ -187,6 +216,8 @@ const DashboardPage = () => {
                 currentImageData={currentImageData}
                 onPrevious={handlePrevious}
                 onNext={handleNext}
+                onDelete={handleDeleteImage}
+                sessionId={currentSessionId}
               />
             </div>
 

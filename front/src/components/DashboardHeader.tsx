@@ -1,4 +1,4 @@
-import { Waves, Upload, Download } from "lucide-react";
+import { Upload, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ImageUploadDialog from "./imageUploadDialog";
 import { useUploadStore } from "@/store/upload";
@@ -45,9 +45,6 @@ const DashboardHeader = ({ onImageUpload }: DashboardHeaderProps) => {
               alt="Dugong"
               className="w-8 h-8 object-contain drop-shadow-lg "
             />
-          </div>
-          <div className="absolute -top-1 -right-1 w-4 h-4 bg-yellow-400 rounded-full flex items-center justify-center animate-bounce">
-            <Waves className="w-2 h-2 text-blue-600" />
           </div>
         </div>
         <div>

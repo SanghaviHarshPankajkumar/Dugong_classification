@@ -1,5 +1,4 @@
 const HeroSection = () => {
-
     return (
         <div
             className="relative flex items-center justify-center md:w-1/2 w-full p-10 overflow-hidden min-h-screen"
@@ -30,13 +29,12 @@ const HeroSection = () => {
                 {/* Enhanced Logo Section */}
                 <div className="relative mb-12">
                     <div className="relative group">
-                        <div className="w-30 h-30 mx-auto bg-white/80 backdrop-blur-xl rounded-3xl flex items-center justify-center border border-white/20 shadow-2xl transform transition-all duration-500 group-hover:scale-105 group-hover:rotate-3">
+                        <div className="w-30 h-30 mx-auto bg-white/80 backdrop-blur-xl rounded-3xl flex items-center justify-center border border-white/20 shadow-2xl transform transition-all duration-500">
                             <img
                                 src="/dugong.png"
                                 alt="Dugong"
                                 className="w-24 h-24 object-contain drop-shadow-lg "
                             />
-
                         </div>
                     </div>
                 </div>
@@ -48,28 +46,25 @@ const HeroSection = () => {
                             {/* Main Technology Part */}
                             <div className="mb-3">
                                 <span className="inline-block bg-gradient-to-r from-white via-cyan-100 to-white bg-clip-text text-transparent">
-                                    Standalone Object Recognition
-                                </span>
-                                <br />
-                                <span className="inline-block bg-gradient-to-r from-cyan-200 via-white to-cyan-200 bg-clip-text text-transparent">
-                                    and Monitoring Software
+                                    Dugong Detection System
                                 </span>
                             </div>
 
                             {/* Species Focus */}
                             <div className="mb-3">
                                 <span className="inline-block text-2xl md:text-3xl lg:text-4xl">
-                                    <span className="text-yellow-300 font-extrabold animate-pulse">(</span>
-                                    <span className="bg-gradient-to-r from-yellow-200 via-orange-200 to-yellow-300 bg-clip-text text-transparent font-bold">
-                                        Dugong
+                                    <span className="text-yellow-300 font-extrabold animate-pulse">
+                                        (
                                     </span>
-                                    <span className="text-yellow-300 font-extrabold animate-pulse">)</span>
+                                    <span className="bg-gradient-to-r from-yellow-200 via-orange-200 to-yellow-300 bg-clip-text text-transparent font-bold">
+                                        DDS
+                                    </span>
+                                    <span className="text-yellow-300 font-extrabold animate-pulse">
+                                        )
+                                    </span>
                                 </span>
                             </div>
-
                         </h1>
-
-
                     </div>
                 </div>
             </div>
