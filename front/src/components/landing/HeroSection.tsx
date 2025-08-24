@@ -30,7 +30,7 @@ const HeroSection = () => {
 
             {/* Main Title */}
             <div className="relative z-10 text-center text-white max-w-lg px-8">
-                <h1 className="text-xl md:text-3xl lg:text-4xl leading-tight mb-2">
+                <h1 className="text-xl md:text-2xl lg:text-3xl leading-tight mb-2">
                     Standalone Object Recognition
                 </h1>
                 <h1 className="text-2xl md:text-3xl lg:text-4xl leading-tight mb-6">

@@ -69,7 +69,7 @@ const ResultsSidebar = ({ currentImageData }: ResultsSidebarProps) => {
         <div className="flex flex-col md:flex-row items-stretch md:items-center gap-2 md:gap-4 w-full md:w-auto">
 
           <Button
-            className="w-full h-12 md:w-auto gap-2 bg-[#0077B6] backdrop-blur-sm border-2 border-white/30 hover:bg-[#0077B6] cursor-pointer"
+            className="w-full h-12 gap-2 bg-[#0077B6] backdrop-blur-sm border-2 border-white/30 hover:bg-[#0077B6] cursor-pointer rounded-lg"
             onClick={handleExportCSV}
           >
             <Download className="w-4 h-4" />
@@ -77,7 +77,7 @@ const ResultsSidebar = ({ currentImageData }: ResultsSidebarProps) => {
           </Button>
         </div>
         {/* Legends Card */}
-        <Card className="bg-white  shadow-sm">
+        <Card className="bg-white shadow-lg border-0">
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-base font-medium text-gray-900">
               <svg
@@ -109,7 +109,7 @@ const ResultsSidebar = ({ currentImageData }: ResultsSidebarProps) => {
         </Card>
 
         {/* Detection Results Card */}
-        <Card className="bg-white  shadow-sm">
+        <Card className="bg-white shadow-lg border-0">
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-base font-medium text-gray-900">
               <svg
@@ -148,7 +148,7 @@ const ResultsSidebar = ({ currentImageData }: ResultsSidebarProps) => {
                 variant="secondary"
                 className="bg-gray-100 text-gray-900 hover:bg-gray-200"
               >
-                {currentImageData?.dugongCount || 30}
+                {currentImageData?.dugongCount || "N/A"}
               </Badge>
             </div>
             <hr className="border-gray-200" />
@@ -158,7 +158,7 @@ const ResultsSidebar = ({ currentImageData }: ResultsSidebarProps) => {
                 variant="secondary"
                 className="bg-gray-100 text-gray-900 hover:bg-gray-200"
               >
-                {currentImageData?.motherCalfCount || 4}
+                {currentImageData?.motherCalfCount || "N/A"}
               </Badge>
             </div>
             <hr className="border-gray-200" />
@@ -202,7 +202,7 @@ const ResultsSidebar = ({ currentImageData }: ResultsSidebarProps) => {
               >
                 {(currentImageData?.motherCalfCount
                   ? 2 * currentImageData.motherCalfCount
-                  : 0) + (currentImageData?.dugongCount || 38)}
+                  : 0) + (currentImageData?.dugongCount || 0)}
               </Badge>
             </div>
             <hr className="border-gray-200" />
@@ -212,14 +212,14 @@ const ResultsSidebar = ({ currentImageData }: ResultsSidebarProps) => {
                 variant="secondary"
                 className="bg-gray-100 text-gray-900 hover:bg-gray-200"
               >
-                {getBehaviorLabel(currentImageData?.imageClass) || "Resting"}
+                {getBehaviorLabel(currentImageData?.imageClass) || "N/A"}
               </Badge>
             </div>
           </CardContent>
         </Card>
 
         {/* Meta Data Card */}
-        <Card className="bg-white  shadow-sm">
+        <Card className="bg-white shadow-lg border-0">
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-base font-medium text-gray-900">
               <svg
@@ -248,7 +248,7 @@ const ResultsSidebar = ({ currentImageData }: ResultsSidebarProps) => {
                 variant="secondary"
                 className="bg-gray-100 text-gray-900 hover:bg-gray-200"
               >
-                {currentImageData?.capturedDate || "Not found"}
+                {currentImageData?.capturedDate || "N/A"}
               </Badge>
             </div>
             <hr className="border-gray-200" />
@@ -280,7 +280,7 @@ const ResultsSidebar = ({ currentImageData }: ResultsSidebarProps) => {
                 >
                   {currentImageData?.imageUrl
                     ? (() => {
-                      const fileName = currentImageData.imageUrl.split("/").pop() || "Image 1";
+                      const fileName = currentImageData.imageUrl.split("/").pop() || "N/A";
                       if (fileName.length > 15) {
                         return fileName.substring(0, 12) + "...";
                       }

@@ -22,7 +22,7 @@
   --destructive-foreground: oklch(1 0 0);
   --border: oklch(0.9276 0.0058 264.5313);
   --input: oklch(0.9276 0.0058 264.5313);
-  --ring: oklch(0.5 0.15 220); /* Changed to blue instead of green */
+  /* --ring: oklch(0.5 0.15 220); Changed to blue instead of green */
   --chart-1: oklch(0.7227 0.192 149.5793);
   --chart-2: oklch(0.6959 0.1491 162.4796);
   --chart-3: oklch(0.596 0.1274 163.2254);
@@ -35,7 +35,7 @@
   --sidebar-accent: oklch(0.9505 0.0507 163.0508);
   --sidebar-accent-foreground: oklch(0.3729 0.0306 259.7328);
   --sidebar-border: oklch(0.9276 0.0058 264.5313);
-  --sidebar-ring: oklch(0.5 0.15 220); /* Changed to blue instead of green */
+  /* --sidebar-ring: oklch(0.5 0.15 220); Changed to blue instead of green */
   --font-sans: DM Sans, sans-serif;
   --font-serif: Lora, serif;
   --font-mono: IBM Plex Mono, monospace;
@@ -96,7 +96,7 @@
   --sidebar-accent: oklch(0.3729 0.0306 259.7328);
   --sidebar-accent-foreground: oklch(0.7118 0.0129 286.0665);
   --sidebar-border: oklch(0.4461 0.0263 256.8018);
-  --sidebar-ring: oklch(0.5 0.15 220); /* Changed to blue in dark mode too */
+  --sidebar-ring: oklch(0.5 0.15 220); 
   --font-sans: DM Sans, sans-serif;
   --font-serif: Lora, serif;
   --font-mono: IBM Plex Mono, monospace;

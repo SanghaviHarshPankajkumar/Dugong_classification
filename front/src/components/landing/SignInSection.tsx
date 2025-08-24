@@ -137,7 +137,7 @@ const SignInSection = () => {
             Sign In
           </h2>
           <p className="text-center text-gray-600 mb-6 text-sm">
-            Provide your details to proceed
+          Provide your details to proceed to the dashboard
           </p>
 
           <form

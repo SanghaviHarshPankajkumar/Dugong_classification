@@ -48,7 +48,7 @@ const ImageViewer = ({
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-lg border-2 border-dashed border-blue-400 p-3 sm:p-6">
+    <div className="bg-white rounded-xl shadow-lg border-0 p-3 sm:p-6">
       {/* Main Image Display Area */}
       <div className="mb-4 sm:mb-6">
         {/* Main Image */}
@@ -57,7 +57,7 @@ const ImageViewer = ({
             <img
               src={currentImageData.imageUrl || ""}
               alt="Dugong monitoring capture"
-              className="w-full h-48 sm:h-64 md:h-80 lg:h-96 object-cover rounded-lg border border-gray-200"
+                className="w-full h-full object-cover rounded-lg border border-gray-200"
             />
           )}
         </div>
@@ -78,31 +78,32 @@ const ImageViewer = ({
               <span className="px-2 py-1 rounded-md text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200 shadow-sm flex-1 mr-2 truncate min-w-0">
                 {getImageName(currentImageData?.imageUrl)}
               </span>
-
+              
+              {/* Mobile Delete Button */}
               {onDelete && (
                 <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
                   <DialogTrigger asChild>
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="gap-1 text-red-500 hover:text-red-600 hover:bg-red-50 cursor-pointer flex-shrink-0 p-1 h-8 w-8"
+                      className="cursor-pointer gap-1 text-red-500 hover:text-red-600 hover:bg-red-50 cursor-pointer flex-shrink-0 p-1.5 w-7 h-7"
                     >
-                      <Trash2 className="w-4 h-4" />
+                      <Trash2 className="w-3 h-3" />
                     </Button>
                   </DialogTrigger>
-                  <DialogContent className="sm:max-w-md mx-4">
+                  <DialogContent className="sm:max-w-md w-[90vw] max-w-[95vw]">
                     <DialogHeader>
-                      <DialogTitle className="text-base sm:text-lg">Delete Image</DialogTitle>
-                      <DialogDescription className="text-sm">
+                      <DialogTitle className="text-lg sm:text-xl md:text-xl">Delete Image</DialogTitle>
+                      <DialogDescription className="text-sm sm:text-base">
                         Are you sure you want to delete this image? This action
                         cannot be undone and will remove the image from everywhere.
                       </DialogDescription>
                     </DialogHeader>
-                    <DialogFooter className="flex flex-col sm:flex-row gap-2">
-                      <Button
-                        variant="outline"
+                    <DialogFooter className="flex flex-col sm:flex-row gap-2 w-full">
+                      <Button 
+                        variant="outline" 
                         onClick={() => setDeleteDialogOpen(false)}
-                        className="w-full sm:w-auto"
+                        className="w-full sm:w-auto text-sm sm:text-base px-4 py-2"
                       >
                         Cancel
                       </Button>
@@ -112,7 +113,7 @@ const ImageViewer = ({
                           onDelete();
                           setDeleteDialogOpen(false);
                         }}
-                        className="w-full sm:w-auto"
+                        className="w-full sm:w-auto text-sm sm:text-base px-4 py-2"
                       >
                         Delete
                       </Button>
@@ -156,21 +157,25 @@ const ImageViewer = ({
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="gap-1 text-red-500 hover:text-red-600 hover:bg-red-50 cursor-pointer flex-shrink-0"
+                      className="cursor-pointer gap-1 text-red-500 hover:text-red-600 hover:bg-red-50 cursor-pointer flex-shrink-0 p-2 sm:p-2 md:p-2 lg:p-2 w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 lg:w-10 lg:h-10"
                     >
-                      <Trash2 className="w-4 h-4" />
+                      <Trash2 className="w-3 h-3 sm:w-4 sm:h-4 md:w-4 md:h-4 lg:w-4 lg:h-4" />
                     </Button>
                   </DialogTrigger>
-                  <DialogContent className="sm:max-w-md">
+                  <DialogContent className="sm:max-w-md w-[90vw] max-w-[95vw]">
                     <DialogHeader>
-                      <DialogTitle>Delete Image</DialogTitle>
-                      <DialogDescription>
+                      <DialogTitle className="text-lg sm:text-xl md:text-xl">Delete Image</DialogTitle>
+                      <DialogDescription className="text-sm sm:text-base">
                         Are you sure you want to delete this image? This action
                         cannot be undone and will remove the image from everywhere.
                       </DialogDescription>
                     </DialogHeader>
-                    <DialogFooter className="flex gap-2">
-                      <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
+                    <DialogFooter className="flex flex-col sm:flex-row gap-2 w-full">
+                      <Button 
+                        variant="outline" 
+                        onClick={() => setDeleteDialogOpen(false)}
+                        className="w-full sm:w-auto text-sm sm:text-base px-4 py-2"
+                      >
                         Cancel
                       </Button>
                       <Button
@@ -179,6 +184,7 @@ const ImageViewer = ({
                           onDelete();
                           setDeleteDialogOpen(false);
                         }}
+                        className="w-full sm:w-auto text-sm sm:text-base px-4 py-2"
                       >
                         Delete
                       </Button>

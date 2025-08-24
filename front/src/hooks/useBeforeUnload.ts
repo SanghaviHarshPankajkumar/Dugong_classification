@@ -1,4 +1,4 @@
-import { useEffect, useCallback } from "react";
+import { useEffect, useCallback } from 'react';
 
 interface UseBeforeUnloadOptions {
   enabled?: boolean;
@@ -16,58 +16,56 @@ interface UseBeforeUnloadOptions {
  */
 export const useBeforeUnload = ({
   enabled = true,
-  message = "Are you sure you want to leave this page? Your changes may not be saved.",
+  message = "Are you sure? Refreshing or Closing this page will clear your session. And all your data will be lost.",
   onBeforeUnload,
   onUnload,
   cleanupUrl,
-  sessionId,
+  sessionId
 }: UseBeforeUnloadOptions = {}) => {
-  const handleBeforeUnload = useCallback(
-    (event: BeforeUnloadEvent) => {
-      if (!enabled) return;
-
-      // Call custom handler if provided
-      if (onBeforeUnload) {
-        onBeforeUnload();
-      }
-
-      // Show browser confirmation dialog
-      event.preventDefault();
-      event.returnValue = message;
-      return message;
-    },
-    [enabled, message, onBeforeUnload]
-  );
+  
+  const handleBeforeUnload = useCallback((event: BeforeUnloadEvent) => {
+    if (!enabled) return;
+    
+    // Call custom handler if provided
+    if (onBeforeUnload) {
+      onBeforeUnload();
+    }
+    
+    // Show browser confirmation dialog
+    event.preventDefault();
+    event.returnValue = message;
+    return message;
+  }, [enabled, message, onBeforeUnload]);
 
   const handleUnload = useCallback(() => {
     if (!enabled) return;
-
+    
     // console.log('🔄 handleUnload triggered');
-
+    
     // Call custom handler if provided
     if (onUnload) {
       onUnload();
     }
-
+    
     // Use navigator.sendBeacon for reliable cleanup when tab is closed
     if (cleanupUrl && sessionId) {
       // console.log('🔄 Attempting beacon cleanup for session:', sessionId);
       // console.log('🔄 Cleanup URL:', cleanupUrl);
-
+      
       try {
         // Create cleanup data
         const cleanupData = new FormData();
-        cleanupData.append("session_id", sessionId);
-        cleanupData.append("source", "tab_close");
-
+        cleanupData.append('session_id', sessionId);
+        cleanupData.append('source', 'tab_close');
+        
         // console.log('🔄 Cleanup data prepared:', {
         //   session_id: sessionId,
         //   source: 'tab_close'
         // });
-
+        
         // Use sendBeacon for reliable delivery during page unload
         const success = navigator.sendBeacon(cleanupUrl, cleanupData);
-
+        
         if (success) {
           // console.log('✅ Session cleanup beacon sent successfully');
         } else {
@@ -81,65 +79,61 @@ export const useBeforeUnload = ({
     }
   }, [enabled, onUnload, cleanupUrl, sessionId]);
 
-  const handlePageHide = useCallback(
-    (event: PageTransitionEvent) => {
-      if (!enabled) return;
-
-      // console.log('📱 handlePageHide triggered, persisted:', event.persisted);
-
-      // pagehide event is more reliable than unload in some browsers
-      if (event.persisted === false) {
-        // Page is not being cached (user is actually leaving)
-        // console.log('📱 Page hide detected - attempting cleanup');
-
-        if (cleanupUrl && sessionId) {
-          // console.log('📱 Attempting beacon cleanup via pagehide for session:', sessionId);
-
-          try {
-            const cleanupData = new FormData();
-            cleanupData.append("session_id", sessionId);
-            cleanupData.append("source", "page_hide");
-
-            const success = navigator.sendBeacon(cleanupUrl, cleanupData);
-
-            if (success) {
-              // console.log('✅ Session cleanup beacon sent via pagehide');
-            } else {
-              // console.warn('⚠️ Session cleanup beacon failed to send via pagehide');
-            }
-          } catch (error) {
-            //  console.error('❌ Error sending cleanup beacon via pagehide:', error);
+  const handlePageHide = useCallback((event: PageTransitionEvent) => {
+    if (!enabled) return;
+    
+    // console.log('📱 handlePageHide triggered, persisted:', event.persisted);
+    
+    // pagehide event is more reliable than unload in some browsers
+    if (event.persisted === false) {
+      // Page is not being cached (user is actually leaving)
+      // console.log('📱 Page hide detected - attempting cleanup');
+      
+      if (cleanupUrl && sessionId) {
+        // console.log('📱 Attempting beacon cleanup via pagehide for session:', sessionId);
+        
+        try {
+          const cleanupData = new FormData();
+          cleanupData.append('session_id', sessionId);
+          cleanupData.append('source', 'page_hide');
+          
+          const success = navigator.sendBeacon(cleanupUrl, cleanupData);
+          
+          if (success) {
+            // console.log('✅ Session cleanup beacon sent via pagehide');
+          } else {
+            // console.warn('⚠️ Session cleanup beacon failed to send via pagehide');
           }
-        } else {
-          // console.log('⚠️ Cannot send beacon via pagehide - missing cleanupUrl or sessionId');
+        } catch (error) {
+          //  console.error('❌ Error sending cleanup beacon via pagehide:', error);
         }
       } else {
-        // console.log('📱 Page hide detected but page is being cached (tab switch)');
+        // console.log('⚠️ Cannot send beacon via pagehide - missing cleanupUrl or sessionId');
       }
-    },
-    [enabled, cleanupUrl, sessionId]
-  );
+    } else {
+      // console.log('📱 Page hide detected but page is being cached (tab switch)');
+    }
+  }, [enabled, cleanupUrl, sessionId]);
 
   useEffect(() => {
     if (!enabled) return;
 
     // Add event listeners - only for tab/browser close, not tab switching
-    window.addEventListener("beforeunload", handleBeforeUnload);
-    window.addEventListener("unload", handleUnload);
-    window.addEventListener("pagehide", handlePageHide);
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    window.addEventListener('unload', handleUnload);
+    window.addEventListener('pagehide', handlePageHide);
 
     // Cleanup function
     return () => {
-      window.removeEventListener("beforeunload", handleBeforeUnload);
-      window.removeEventListener("unload", handleUnload);
-      window.removeEventListener("pagehide", handlePageHide);
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      window.removeEventListener('unload', handleUnload);
+      window.removeEventListener('pagehide', handlePageHide);
     };
   }, [enabled, handleBeforeUnload, handleUnload, handlePageHide]);
 
   // Return functions to manually trigger the handlers
   return {
-    triggerBeforeUnload: () =>
-      handleBeforeUnload(new Event("beforeunload") as BeforeUnloadEvent),
-    triggerUnload: handleUnload,
+    triggerBeforeUnload: () => handleBeforeUnload(new Event('beforeunload') as BeforeUnloadEvent),
+    triggerUnload: handleUnload
   };
 };

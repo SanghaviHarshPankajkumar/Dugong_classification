@@ -19,7 +19,7 @@ def _run_model_on_images_lazy():
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
-SESSION_TIMEOUT_MINUTES = 30
+SESSION_TIMEOUT_MINUTES = 15
 
 def extract_captured_date(image_name: str) -> str:
     """

@@ -12,13 +12,13 @@ from core.logger import setup_logger
 
 logger = setup_logger("cleanup", "logs/cleanup.log")
 
-def is_session_expired(session_folder: Path, expiry_minutes: int = 30) -> bool:
+def is_session_expired(session_folder: Path, expiry_minutes: int = 15) -> bool:
     """
     Check if a session is expired based on its last activity.
     
     Args:
         session_folder: Path to the session folder
-        expiry_minutes: Session expiry time in minutes (default: 30min)
+        expiry_minutes: Session expiry time in minutes (default: 15min)
         
     Returns:
         bool: True if session is expired, False otherwise
@@ -86,7 +86,7 @@ def update_session_activity(session_id: str):
     except Exception as e:
         logger.error(f"Failed to update session activity for {session_id}: {e}")
 
-async def cleanup_expired_sessions(interval_seconds: int = 300, expiry_minutes: int =30):
+async def cleanup_expired_sessions(interval_seconds: int = 300, expiry_minutes: int =15):
     """
     Monitor and remove expired session folders automatically.
     Only cleans up sessions that have actually expired based on their last activity.

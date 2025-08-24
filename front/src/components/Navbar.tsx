@@ -42,7 +42,7 @@ function formatTimeRemaining(seconds: number): string {
 
 const Navbar: React.FC<NavbarProps> = ({ imageCount = 0 }) => {
   const navigate = useNavigate();
-  const [sessionTimeLeft, setSessionTimeLeft] = useState(30 * 60); // 30 minutes in seconds
+  const [sessionTimeLeft, setSessionTimeLeft] = useState(15 * 60); // 15 minutes in seconds
   const [isSessionExpired, setIsSessionExpired] = useState(false);
   const { sessionId, sessionStartTime } = useUploadStore();
   const { username: userName, email: userEmail } = useAuthStore();
@@ -104,7 +104,7 @@ const Navbar: React.FC<NavbarProps> = ({ imageCount = 0 }) => {
     const timer = setInterval(() => {
       if (sessionStartTime) {
         const elapsed = Math.floor((Date.now() - sessionStartTime) / 1000);
-        const remaining = Math.max(0, 30 * 60 - elapsed);
+        const remaining = Math.max(0, 15 * 60 - elapsed);
         setSessionTimeLeft(remaining);
 
         if (remaining === 0 && !isSessionExpired) {
@@ -124,19 +124,19 @@ const Navbar: React.FC<NavbarProps> = ({ imageCount = 0 }) => {
   };
 
   return (
-    <nav className="sticky top-0 bg-[#0077B6]/[0.90] bg-opacity-[0.12] backdrop-blur-sm border-b border-white/10">
+    <nav className="sticky top-0 bg-[#0077B6]/[0.12] bg-opacity-[0.12] backdrop-blur-sm border-b border-white/10">
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
         {/* Main navbar row */}
         <div className="flex items-center justify-between h-14 sm:h-16">
           {/* Left Section - Logo & Brand */}
           <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
             <img
-              src="/dugong.png"
+              src="/dugong_blue.png"
               alt="Dugong"
-              className="w-12 h-12 object-contain "
+              className="w-12 h-12 object-contain text-[#0077B6]"
             />
             <h1 className="text-lg sm:text-xl text-white">
-              <span className="hidden sm:inline">Dugong Detection System</span>
+              <span className="text-[#0077B6] font-bold">Dugong Detection System</span>
             </h1>
           </div>
 
@@ -170,11 +170,19 @@ const Navbar: React.FC<NavbarProps> = ({ imageCount = 0 }) => {
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="ghost"
-                  className="cursor-pointer relative h-8 w-8 sm:h-10 sm:w-10 p-0 rounded-full"
+                  className="cursor-pointer relative h-8 w-auto sm:h-10 sm:w-auto p-2 sm:px-3 rounded-lg flex items-center gap-2 transition-colors"
                 >
-                  <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-white text-[#0077B6] flex items-center justify-center  font-semibold text-sm sm:text-base shadow-md">
+                  <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-white text-[#0077B6] flex items-center justify-center font-semibold text-sm sm:text-base shadow-md flex-shrink-0">
                     {userName && getInitials(userName)}
                   </div>
+                  <svg 
+                    className="w-4 h-4" 
+                    fill="none" 
+                    stroke="#0077B6" 
+                    viewBox="0 0 24 24"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent className="w-56" align="end" forceMount>
@@ -193,7 +201,7 @@ const Navbar: React.FC<NavbarProps> = ({ imageCount = 0 }) => {
                   <NavLink
                     to="/"
                     onClick={handleLogout}
-                    className="w-full flex items-center gap-2 text-red-600"
+                    className="w-full flex items-center gap-2 text-[#0077B6]"
                   >
                     <LogOut className="w-4 h-4" />
                     Log out
@@ -208,8 +216,8 @@ const Navbar: React.FC<NavbarProps> = ({ imageCount = 0 }) => {
         {imageCount > 0 && (
           <div className="xs:hidden pb-2">
             <div className="flex items-center justify-center">
-              <div className="flex items-center gap-1.5 px-2 py-1 bg-green-50 border border-green-200 rounded-full">
-                <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
+              <div className="flex items-center gap-1.5 px-2 py-1 rounded-full">
+                <div className="w-1.5 h-1.5 rounded-full animate-pulse"></div>
                 <span className="text-xs font-medium text-green-700">
                   {imageCount} Active
                 </span>
