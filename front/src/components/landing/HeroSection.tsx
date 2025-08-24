@@ -11,20 +11,7 @@ const HeroSection = () => {
             }}
         >
             {/* Blue overlay with 60% opacity */}
-            <div className="absolute inset-0 bg-[#0077B6] opacity-60"></div>
-
-            {/* Additional subtle effects */}
-            <div className="absolute inset-0">
-                {/* Subtle wave patterns */}
-                <div className="absolute inset-0 opacity-10">
-                    <div className="absolute top-0 left-0 w-full h-full">
-                        <div className="animate-pulse bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
-                    </div>
-                </div>
-
-                {/* Light rays effect */}
-                <div className="absolute top-0 right-0 w-1/2 h-1/2 bg-gradient-to-bl from-white/5 to-transparent"></div>
-            </div>
+            <div className="absolute inset-0 bg-[#0077B6] opacity-80"></div>
 
             {/* Dugong Illustration */}
             <div className="relative z-10 mb-8">
@@ -49,9 +36,8 @@ const HeroSection = () => {
                 <h1 className="text-2xl md:text-3xl lg:text-4xl leading-tight mb-6">
                     and Monitoring Software
                 </h1>
-
                 {/* Subtitle */}
-                <h2 className="text-xl md:text-2xl font-bold text-white/90">
+                <h2 className="text-xl md:text-2xl font-bold ">
                     Dugong Detection System
                 </h2>
             </div>
