@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 //Navbar.tsx
 import React, { useState, useEffect } from "react";
-import { LogOut, Eye, Clock } from "lucide-react";
+import { LogOut, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -124,18 +124,19 @@ const Navbar: React.FC<NavbarProps> = ({ imageCount = 0 }) => {
   };
 
   return (
-    <nav className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-sm">
+    <nav className="sticky top-0 bg-[#0077B6]/[0.90] bg-opacity-[0.12] backdrop-blur-sm border-b border-white/10">
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
         {/* Main navbar row */}
         <div className="flex items-center justify-between h-14 sm:h-16">
           {/* Left Section - Logo & Brand */}
           <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
-            <div className="w-7 h-7 sm:w-8 sm:h-8 bg-gradient-to-r from-blue-600 to-cyan-600 rounded-lg flex items-center justify-center">
-              <Eye className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" />
-            </div>
-            <h1 className="text-lg sm:text-xl font-bold bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent">
-              <span className="hidden sm:inline">Dugong Detector</span>
-              <span className="sm:hidden">Dugong</span>
+            <img
+              src="/dugong.png"
+              alt="Dugong"
+              className="w-12 h-12 object-contain "
+            />
+            <h1 className="text-lg sm:text-xl text-white">
+              <span className="hidden sm:inline">Dugong Detection System</span>
             </h1>
           </div>
 
@@ -143,8 +144,8 @@ const Navbar: React.FC<NavbarProps> = ({ imageCount = 0 }) => {
           <div className="flex items-center gap-2 sm:gap-3">
             {/* Status Badge - Hidden on very small screens */}
             {imageCount > 0 && (
-              <div className="hidden xs:flex items-center gap-1.5 px-2 sm:px-3 py-1 bg-green-50 border border-green-200 rounded-full">
-                <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-green-500 rounded-full animate-pulse"></div>
+              <div className="hidden xs:flex items-center gap-1.5 px-2 sm:px-3 py-1 bg-green-50 rounded-full">
+
                 <span className="text-xs sm:text-sm font-medium text-green-700">
                   <span className="hidden sm:inline">{imageCount} Active</span>
                   <span className="sm:hidden">{imageCount}</span>
@@ -171,7 +172,7 @@ const Navbar: React.FC<NavbarProps> = ({ imageCount = 0 }) => {
                   variant="ghost"
                   className="cursor-pointer relative h-8 w-8 sm:h-10 sm:w-10 p-0 rounded-full"
                 >
-                  <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-r from-blue-500 to-cyan-500 flex items-center justify-center text-white font-semibold text-sm sm:text-base shadow-md">
+                  <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-white text-[#0077B6] flex items-center justify-center  font-semibold text-sm sm:text-base shadow-md">
                     {userName && getInitials(userName)}
                   </div>
                 </Button>
@@ -188,19 +189,6 @@ const Navbar: React.FC<NavbarProps> = ({ imageCount = 0 }) => {
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                {sessionId && sessionStartTime && (
-                  <>
-                    <DropdownMenuItem disabled>
-                      <div className="flex items-center gap-2">
-                        <Clock className="w-4 h-4" />
-                        <span className={`text-sm ${getTimerColor()}`}>
-                          Session: {formatTimeRemaining(sessionTimeLeft)}
-                        </span>
-                      </div>
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                  </>
-                )}
                 <DropdownMenuItem className="gap-2 text-red-600">
                   <NavLink
                     to="/"

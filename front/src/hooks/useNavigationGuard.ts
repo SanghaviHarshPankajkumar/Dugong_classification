@@ -1,5 +1,5 @@
-import { useState, useCallback } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useState, useCallback } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 
 interface UseNavigationGuardOptions {
   enabled?: boolean;
@@ -14,10 +14,12 @@ export const useNavigationGuard = ({
   enabled = true,
   onBeforeNavigate,
   onConfirmNavigate,
-  onCancelNavigate
+  onCancelNavigate,
 }: UseNavigationGuardOptions = {}) => {
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
-  const [pendingNavigation, setPendingNavigation] = useState<string | null>(null);
+  const [pendingNavigation, setPendingNavigation] = useState<string | null>(
+    null
+  );
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -61,32 +63,38 @@ export const useNavigationGuard = ({
   const cancelNavigation = useCallback(() => {
     setShowConfirmDialog(false);
     setPendingNavigation(null);
-    
+
     if (onCancelNavigate) {
       onCancelNavigate();
     }
   }, [onCancelNavigate]);
 
   // Function to navigate with guard
-  const navigateWithGuard = useCallback(async (to: string) => {
-    if (!enabled) {
-      navigate(to);
-      return;
-    }
+  const navigateWithGuard = useCallback(
+    async (to: string) => {
+      if (!enabled) {
+        navigate(to);
+        return;
+      }
 
-    // Check if we're navigating to the same location
-    if (to === location.pathname) {
-      return;
-    }
+      // Check if we're navigating to the same location
+      if (to === location.pathname) {
+        return;
+      }
 
-    // Show confirmation dialog
-    showConfirmation(to);
-  }, [enabled, navigate, location.pathname, showConfirmation]);
+      // Show confirmation dialog
+      showConfirmation(to);
+    },
+    [enabled, navigate, location.pathname, showConfirmation]
+  );
 
   // Function to navigate without guard (for confirmed actions)
-  const navigateWithoutGuard = useCallback((to: string) => {
-    navigate(to);
-  }, [navigate]);
+  const navigateWithoutGuard = useCallback(
+    (to: string) => {
+      navigate(to);
+    },
+    [navigate]
+  );
 
   return {
     showConfirmDialog,
@@ -95,6 +103,6 @@ export const useNavigationGuard = ({
     cancelNavigation,
     navigateWithGuard,
     navigateWithoutGuard,
-    setShowConfirmDialog
+    setShowConfirmDialog,
   };
 };

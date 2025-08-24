@@ -1,7 +1,8 @@
-import { ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Trash2, Upload } from "lucide-react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import ImageUploadDialog from "./imageUploadDialog";
 import {
   Dialog,
   DialogContent,
@@ -18,150 +19,260 @@ interface ImageViewerProps {
   currentImageData: {
     imageUrl?: string;
   } | null;
+  allImagesData?: Array<{
+    imageUrl?: string;
+  }>;
   onPrevious: () => void;
   onNext: () => void;
   onDelete?: () => void;
-  sessionId?: string;
+  onUpload?: () => void;
 }
 
 const ImageViewer = ({
   currentImage,
   totalImages,
   currentImageData,
+  allImagesData,
   onPrevious,
   onNext,
   onDelete,
+  onUpload,
 }: ImageViewerProps) => {
-  return (
-    <Card className="border-0 shadow-2xl backdrop-blur-md bg-gradient-to-br from-blue-400 via-teal-500 to-blue-600">
-      <CardHeader className="pb-4">
-        <div className="flex items-center justify-between">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="gap-2 text-white hover:bg-white/20 hover:text-white transition-all duration-200"
-            disabled={currentImage === 1}
-            onClick={onPrevious}
-          >
-            <ChevronLeft className="w-4 h-4" />
-            Previous
-          </Button>
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
-          <div className="flex items-center gap-2">
-            <Badge className="bg-white/20 backdrop-blur-sm text-white border-white/30 font-medium">
+  const getImageName = (imageUrl?: string) => {
+    if (!imageUrl) return "N/A";
+    const fileName = imageUrl.split("/").pop() || "";
+    // Truncate filename if too long
+    return fileName.length > 20 ? `${fileName.substring(0, 17)}...` : fileName;
+  };
+
+  return (
+    <div className="bg-white rounded-xl shadow-lg border-2 border-dashed border-blue-400 p-3 sm:p-6">
+      {/* Main Image Display Area */}
+      <div className="mb-4 sm:mb-6">
+        {/* Main Image */}
+        <div className="relative mb-3 sm:mb-4">
+          {currentImageData && (
+            <img
+              src={currentImageData.imageUrl || ""}
+              alt="Dugong monitoring capture"
+              className="w-full h-48 sm:h-64 md:h-80 lg:h-96 object-cover rounded-lg border border-gray-200"
+            />
+          )}
+        </div>
+
+        {/* Navigation + Image Info - Mobile Stack Layout */}
+        <div className="space-y-3 sm:space-y-0">
+          {/* Mobile: Stack vertically */}
+          <div className="flex flex-col space-y-3 sm:hidden">
+            {/* Image Count - Top on mobile */}
+            <div className="flex justify-center">
+              <Badge className="bg-blue-100 text-blue-800 border border-blue-200 font-medium px-3 py-1 text-xs sm:text-sm">
+                Image {currentImage} of {totalImages}
+              </Badge>
+            </div>
+
+            {/* Image Name + Delete - Middle on mobile */}
+            <div className="flex items-center justify-between">
+              <span className="px-2 py-1 rounded-md text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200 shadow-sm flex-1 mr-2 truncate min-w-0">
+                {getImageName(currentImageData?.imageUrl)}
+              </span>
+
+              {onDelete && (
+                <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="gap-1 text-red-500 hover:text-red-600 hover:bg-red-50 cursor-pointer flex-shrink-0 p-1 h-8 w-8"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-md mx-4">
+                    <DialogHeader>
+                      <DialogTitle className="text-base sm:text-lg">Delete Image</DialogTitle>
+                      <DialogDescription className="text-sm">
+                        Are you sure you want to delete this image? This action
+                        cannot be undone and will remove the image from everywhere.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter className="flex flex-col sm:flex-row gap-2">
+                      <Button
+                        variant="outline"
+                        onClick={() => setDeleteDialogOpen(false)}
+                        className="w-full sm:w-auto"
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        onClick={() => {
+                          onDelete();
+                          setDeleteDialogOpen(false);
+                        }}
+                        className="w-full sm:w-auto"
+                      >
+                        Delete
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+              )}
+            </div>
+
+            {/* Navigation - Bottom on mobile */}
+            <div className="flex justify-center gap-2">
+              <button
+                onClick={onPrevious}
+                disabled={currentImage === 1}
+                className="w-10 h-10 bg-blue-500 text-white rounded-lg flex items-center justify-center transition-colors disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed cursor-pointer"
+              >
+                <ChevronLeft className="w-5 h-5" />
+              </button>
+
+              <button
+                onClick={onNext}
+                disabled={currentImage === totalImages}
+                className="w-10 h-10 bg-blue-500 text-white rounded-lg flex items-center justify-center transition-colors disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed cursor-pointer"
+              >
+                <ChevronRight className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+
+          {/* Desktop: Original horizontal layout */}
+          <div className="hidden sm:flex sm:items-center sm:justify-between">
+            {/* Left: Image Name + Delete */}
+            <div className="flex items-center gap-3 min-w-0 flex-1 mr-4">
+              <span className="px-3 py-1 rounded-md text-sm font-medium bg-blue-50 text-blue-700 border border-blue-200 shadow-sm truncate min-w-0 max-w-xs">
+                {getImageName(currentImageData?.imageUrl)}
+              </span>
+
+              {onDelete && (
+                <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="gap-1 text-red-500 hover:text-red-600 hover:bg-red-50 cursor-pointer flex-shrink-0"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                      <DialogTitle>Delete Image</DialogTitle>
+                      <DialogDescription>
+                        Are you sure you want to delete this image? This action
+                        cannot be undone and will remove the image from everywhere.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter className="flex gap-2">
+                      <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
+                        Cancel
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        onClick={() => {
+                          onDelete();
+                          setDeleteDialogOpen(false);
+                        }}
+                      >
+                        Delete
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+              )}
+            </div>
+
+            {/* Center: Image Count */}
+            <Badge className="bg-blue-100 text-blue-800 border border-blue-200 font-medium px-3 py-1 flex-shrink-0 mx-2">
               Image {currentImage} of {totalImages}
             </Badge>
-          </div>
 
-          <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="gap-2 text-white hover:bg-white/20 hover:text-white transition-all duration-200"
-              disabled={currentImage === totalImages}
-              onClick={onNext}
-            >
-              Next
-              <ChevronRight className="w-4 h-4" />
-            </Button>
+            {/* Right: Navigation */}
+            <div className="flex gap-2 flex-shrink-0">
+              <button
+                onClick={onPrevious}
+                disabled={currentImage === 1}
+                className="w-9 h-9 bg-blue-500 text-white rounded-lg flex items-center justify-center transition-colors disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed cursor-pointer"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
 
-            {onDelete && (
-              <Dialog>
-                <DialogTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="gap-2 text-red-300 hover:bg-red-500/20 hover:text-red-200 transition-all duration-200"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                    Delete
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-md">
-                  <DialogHeader>
-                    <DialogTitle>Delete Image</DialogTitle>
-                    <DialogDescription>
-                      Are you sure you want to delete this image? This action
-                      cannot be undone and will remove the image from
-                      everywhere.
-                    </DialogDescription>
-                  </DialogHeader>
-                  <DialogFooter className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      onClick={() => {
-                        const dialog = document.querySelector(
-                          '[data-slot="dialog"]'
-                        ) as any;
-                        if (dialog) dialog.close();
-                      }}
-                    >
-                      Cancel
-                    </Button>
-                    <Button
-                      variant="destructive"
-                      onClick={() => {
-                        onDelete();
-                        const dialog = document.querySelector(
-                          '[data-slot="dialog"]'
-                        ) as any;
-                        if (dialog) dialog.close();
-                      }}
-                    >
-                      Delete
-                    </Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
-            )}
+              <button
+                onClick={onNext}
+                disabled={currentImage === totalImages}
+                className="w-9 h-9 bg-blue-500 text-white rounded-lg flex items-center justify-center transition-colors disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed cursor-pointer"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
           </div>
         </div>
-      </CardHeader>
+      </div>
 
-      <CardContent>
-        <div className="relative overflow-hidden rounded-xl border-2 border-white/30 bg-white/10 backdrop-blur-sm inline-block shadow-lg">
-          {currentImageData && (
-            <>
-              {/* Debug info in development */}
-              {process.env.NODE_ENV === "development" &&
-                currentImageData.imageUrl && (
-                  <div className="absolute top-2 left-2 bg-black/70 text-white text-xs p-2 rounded z-10 max-w-xs break-all">
-                    <div>Image URL: {currentImageData.imageUrl}</div>
-                  </div>
-                )}
+      {/* Thumbnail Carousel */}
+      <div className="mb-4 sm:mb-6">
+        <div className="flex gap-2 sm:gap-4 overflow-x-auto pb-4 px-1">
+          {Array.from({ length: totalImages }, (_, index) => {
+            const imageNumber = index + 1;
+            const isCurrent = imageNumber === currentImage;
+            const isNext = imageNumber === currentImage + 1;
+            const imageData = allImagesData?.[index] || currentImageData;
 
-              <img
-                src={
-                  currentImageData?.imageUrl
-                    ? `${currentImageData.imageUrl}`
-                    : ""
-                }
-                alt="Dugong monitoring capture"
-                className="w-auto h-auto max-w-full max-h-full object-contain"
-                onLoad={() => {
-                  if (process.env.NODE_ENV === "development") {
-                    // console.log(
-                    //   "✅ Image loaded successfully:",
-                    //   currentImageData.imageUrl
-                    // );
-                  }
-                }}
-                onError={(e) => {
-                  if (process.env.NODE_ENV === "development") {
-                    console.error(
-                      "❌ Image failed to load:",
-                      currentImageData.imageUrl,
-                      e
-                    );
-                  }
-                }}
-              />
-            </>
-          )}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent pointer-events-none" />
+            return (
+              <div
+                key={imageNumber}
+                className="flex flex-col items-center min-w-0 flex-shrink-0"
+              >
+                <div
+                  className={`w-20 h-20 sm:w-28 sm:h-28 rounded-xl border-2 overflow-hidden cursor-pointer hover:border-blue-400 transition-colors shadow-sm ${isCurrent
+                    ? "border-blue-500 border-b-4 border-b-blue-500"
+                    : isNext
+                      ? "border-blue-300 border-b-2 border-b-blue-300"
+                      : "border-gray-200"
+                    }`}
+                  onClick={() => {
+                    if (imageNumber < currentImage) {
+                      for (let i = 0; i < currentImage - imageNumber; i++) {
+                        onPrevious();
+                      }
+                    } else if (imageNumber > currentImage) {
+                      for (let i = 0; i < imageNumber - currentImage; i++) {
+                        onNext();
+                      }
+                    }
+                  }}
+                >
+                  {imageData && (
+                    <img
+                      src={imageData.imageUrl || ""}
+                      alt={`Image ${imageNumber}`}
+                      className="w-full h-full object-cover"
+                    />
+                  )}
+                </div>
+                <span className="text-xs text-gray-500 mt-1 sm:mt-2 text-center truncate w-20 sm:w-28">
+                  Image {imageNumber}
+                </span>
+              </div>
+            );
+          })}
         </div>
-      </CardContent>
-    </Card>
+      </div>
+
+      {/* Upload Button */}
+      <ImageUploadDialog onImageUploaded={onUpload}>
+        <Button className="w-full gap-2 bg-[#0077B6] hover:bg-[#006494] transition-all duration-200 shadow-lg cursor-pointer justify-center text-center text-sm sm:text-base py-2 sm:py-3">
+          <Upload className="w-4 h-4" />
+          Upload More
+        </Button>
+      </ImageUploadDialog>
+    </div>
   );
 };
 

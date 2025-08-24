@@ -1,4 +1,4 @@
-import { CloudUpload } from "lucide-react";
+import { Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CardContent } from "@/components/ui/card";
 import Navbar from "@/components/Navbar";
@@ -11,44 +11,61 @@ const EmptyState = ({
   onImageUpload: (response: unknown) => void;
 }) => {
   return (
-    <div className="min-h-screen  relative overflow-hidden">
-      <AnimatedBackground />
-
+    <div className="min-h-screen relative overflow-hidden">
       <Navbar />
+      <div className="flex items-center justify-center p-6 min-h-[calc(100vh-4rem)] relative z-10">
+        <CardContent className="w-full max-w-4xl p-8 lg:p-12 flex flex-col items-center justify-center text-center">
+          {/* Main Heading */}
+          <h1 className="text-2xl lg:text-3xl font-bold text-gray-800 mb-4">
+            Upload And Detect Dugongs With AI
+          </h1>
 
-      <div className="flex items-center justify-center p-6 min-h-[calc(100vh-4rem)] relative z-10 ">
-        {/* <Card className="w-full max-w-5xl border-0 shadow-2xl backdrop-blur-md "> */}
-        <CardContent className="w-full max-w-5xl p-10 lg:p-16 flex flex-col lg:flex-row items-center gap-10 ">
-          {/* Left Side: Dropzone-like box */}
-          <div className="flex-1 border-2 border-dashed border-white/30 bg-white/10 backdrop-blur-sm rounded-xl flex flex-col items-center justify-center py-16 px-6 text-center space-y-6 bg-gradient-to-br from-blue-400 via-teal-200 to-blue-500">
-            <div className="relative">
-              <div className="w-36 h-36 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center border-2 border-white/30 shadow-lg">
-                <img
-                  src="/dugong.png"
-                  alt="Dugong"
-                  className="w-24 h-24 object-contain drop-shadow-lg "
-                />
-              </div>
+          {/* Subheading */}
+          <p className="text-md text-gray-500 mb-12 max-w-2xl">
+            Analyze underwater images, detect marine species, and get instant results
+            with our advanced AI detection system
+          </p>
+
+          {/* Upload Box */}
+          <div className="w-full max-w-2xl border-2 border-dashed border-[#0077B6] bg-[#0077B6]/[0.12] backdrop-blur-sm rounded-2xl p-12 mb-8">
+            {/* Icon Circle */}
+            <div className="w-24 h-24 bg-[#0077B6] rounded-full flex items-center justify-center mx-auto mb-6">
+              <img
+                src="/dugong.png"
+                alt="Dugong"
+                className="w-12 h-10 "
+              />
             </div>
-            <div>
-              <p className="text-xl text-gray-700 font-semibold mb-2">
-                Drop your images here
-              </p>
-              <p className="text-black text-sm">or</p>
-            </div>
+
+            {/* Upload Text */}
+            <h2 className="text-2xl font-semibold text-[#0077B6] mb-3">
+              Upload Your Images
+            </h2>
+            <p className="text-gray-600 mb-8">
+              Our system will analyze each image, highlight detected dugong, and provide
+              counts instantly
+            </p>
+
+            {/* Upload Button */}
             <ImageUploadDialog onImageUploaded={onImageUpload}>
               <Button
                 size="lg"
-                className="bg-white/20 backdrop-blur-sm border-2 border-white/30 text-gray-700 hover:bg-white/30 hover:border-white/50 transition-all duration-200 transform hover:scale-105 shadow-lg px-8 py-4 text-lg font-medium"
+                className="bg-[#0077B6] hover:bg-[#0077B6] cursor-pointer text-white px-8 py-4 text-lg font-medium rounded-lg"
               >
-                <CloudUpload className="w-6 h-6 mr-3" />
-                Choose Files
+                <Upload className="w-6 h-6 mr-3" />
+                Upload Image
               </Button>
             </ImageUploadDialog>
+
+            {/* File Info */}
+            <div className="mt-6 space-y-2">
+              <p className="text-sm text-gray-500">• Allow to upload multiple images</p>
+              <p className="text-sm text-gray-500">• Support JPG, PNG format</p>
+            </div>
           </div>
         </CardContent>
       </div>
-    </div >
+    </div>
   );
 };
 

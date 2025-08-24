@@ -171,7 +171,6 @@ const DashboardPage = () => {
   };
 
   const currentImageData = getCurrentImageData();
-
   // If no images uploaded, show empty state
   if (!apiResponse || totalImages === 0) {
     return (
@@ -197,8 +196,8 @@ const DashboardPage = () => {
         <AnimatedBackground />
         <Navbar />
 
-        <div className="relative z-10 p-6">
-          <DashboardHeader onImageUpload={handleImageUpload} />
+        <div className="relative z-10 pt-6 pb-6 px-[10%]">
+          <DashboardHeader />
 
           {isPolling && (
             <div className="text-center py-4 text-blue-600 font-semibold animate-pulse">
@@ -214,10 +213,11 @@ const DashboardPage = () => {
                 currentImage={currentImage}
                 totalImages={totalImages}
                 currentImageData={currentImageData}
+                allImagesData={apiResponse?.results || []}
                 onPrevious={handlePrevious}
                 onNext={handleNext}
                 onDelete={handleDeleteImage}
-                sessionId={currentSessionId}
+                onUpload={handleImageUpload}
               />
             </div>
 
