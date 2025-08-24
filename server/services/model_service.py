@@ -33,6 +33,166 @@ with open("classification_model.pt", "wb") as f:
     
 classification_model = YOLO("classification_model.pt")
 
+def filter_by_scale_per_image(
+    results,
+    mode: str = "ratio",          # "ratio": bounds = mean * [low, high],  "zscore": mean ± k*std
+    low: float = 0.6,             # if mode=="ratio": lower = mean * low ; if "zscore": lower = mean - low*std
+    high: float = 2.0,            # if mode=="ratio": upper = mean * high; if "zscore": upper = mean + high*std
+    metric: str = "geom",         # "geom"=sqrt(area), "area"=w*h, "long_side", or "short_side"
+    min_boxes_for_stats: int = 3, # if fewer boxes than this, skip filtering for that image
+    keep_at_least: int = 0,       # keep top-K by size to avoid dropping everything (0 = allow empty)
+    verbose: bool = True,
+):
+    """
+    Per-image dynamic scale filtering using mean-derived bounds.
+    Computes a size metric for each box, derives bounds from that image's mean,
+    and drops boxes smaller/larger than the bounds.
+
+    Works with Ultralytics YOLO Results objects (res.boxes).
+    """
+    from ultralytics.engine.results import Boxes
+    out = []
+
+    for res in results:
+        if res is None or not len(res.boxes):
+            out.append(res)
+            continue
+
+        # Tensors on the same device as YOLO boxes
+        device = res.boxes.data.device
+        b = res.boxes.xyxy           # (N,4)
+        scores = res.boxes.conf      # (N,)
+        cls = res.boxes.cls if hasattr(res.boxes, "cls") else torch.zeros_like(scores, device=device)
+
+        w = b[:, 2] - b[:, 0]
+        h = b[:, 3] - b[:, 1]
+
+        if metric == "area":
+            size = w * h
+        elif metric == "long_side":
+            size = torch.maximum(w, h)
+        elif metric == "short_side":
+            size = torch.minimum(w, h)
+        else:  # "geom": geometric mean ~ side length from area
+            size = (w * h).sqrt()
+
+        n = size.numel()
+        if n < min_boxes_for_stats:
+            # Not enough stats; leave this image unchanged
+            out.append(res)
+            continue
+
+        mu = size.mean()
+        if mode == "zscore":
+            sigma = size.std(unbiased=False) + 1e-6
+            lower = mu - low * sigma
+            upper = mu + high * sigma
+        else:  # "ratio"
+            lower = mu * low
+            upper = mu * high
+
+        keep = (size >= lower) & (size <= upper)
+
+        # Optional safety: ensure we keep at least K (largest by size)
+        if keep_at_least > 0 and keep.sum().item() < keep_at_least and n > 0:
+            topk_idx = torch.topk(size, k=min(keep_at_least, n)).indices
+            keep = keep.clone()
+            keep[topk_idx] = True
+
+        # Rebuild Boxes
+        kept_boxes = b[keep]
+        kept_scores = scores[keep].unsqueeze(1)
+        kept_cls = cls[keep].unsqueeze(1)
+
+        if kept_boxes.numel() == 0:
+            res.boxes = Boxes(torch.empty((0, 6), device=device), orig_shape=res.orig_shape)
+        else:
+            res.boxes = Boxes(torch.cat([kept_boxes, kept_scores, kept_cls], dim=1), orig_shape=res.orig_shape)
+
+        if verbose:
+            name = os.path.basename(getattr(res, "path", "image"))
+            print(f"[{name}] metric={metric} mode={mode} mean={mu:.2f} "
+                  f"low={lower:.2f} high={upper:.2f} kept {int(keep.sum().item())}/{n}")
+
+        out.append(res)
+
+    return out
+
+def remove_nested_class0(
+    results,
+    parent_cls: int = 1,
+    child_cls: int = 0,
+    overlap_thr: float = 0.8,  # fraction of child area inside parent
+    verbose: bool = True,
+):
+    """
+    Removes child boxes if they are mostly contained within a parent box of another class.
+    
+    Args:
+        results: List of YOLO Results objects.
+        parent_cls: Class index considered as parent.
+        child_cls: Class index considered as child (to remove).
+        overlap_thr: Fraction of child area that must lie inside a parent to remove it.
+    """
+    from ultralytics.engine.results import Boxes
+    cleaned = []
+
+    for res in results:
+        if res is None or not len(res.boxes):
+            cleaned.append(res)
+            continue
+
+        device = res.boxes.data.device
+        boxes = res.boxes.xyxy
+        scores = res.boxes.conf
+        cls = res.boxes.cls if hasattr(res.boxes, "cls") else torch.zeros_like(scores, device=device)
+
+        keep = torch.ones(len(boxes), dtype=torch.bool, device=device)
+
+        parents_idx = (cls == parent_cls).nonzero(as_tuple=True)[0]
+        children_idx = (cls == child_cls).nonzero(as_tuple=True)[0]
+
+        for ci in children_idx:
+            c_box = boxes[ci]
+            c_area = (c_box[2] - c_box[0]) * (c_box[3] - c_box[1])
+            if c_area <= 0:
+                continue
+
+            # Compute overlap with each parent
+            for pi in parents_idx:
+                p_box = boxes[pi]
+                # Intersection box
+                ix1 = torch.max(c_box[0], p_box[0])
+                iy1 = torch.max(c_box[1], p_box[1])
+                ix2 = torch.min(c_box[2], p_box[2])
+                iy2 = torch.min(c_box[3], p_box[3])
+
+                iw = torch.clamp(ix2 - ix1, min=0)
+                ih = torch.clamp(iy2 - iy1, min=0)
+                inter_area = iw * ih
+
+                frac_inside = inter_area / (c_area + 1e-6)
+                if frac_inside >= overlap_thr:
+                    keep[ci] = False
+                    break  # no need to check other parents
+
+        kept_boxes = boxes[keep]
+        kept_scores = scores[keep].unsqueeze(1)
+        kept_cls = cls[keep].unsqueeze(1)
+
+        if kept_boxes.numel() == 0:
+            res.boxes = Boxes(torch.empty((0, 6), device=device), orig_shape=res.orig_shape)
+        else:
+            res.boxes = Boxes(torch.cat([kept_boxes, kept_scores, kept_cls], dim=1), orig_shape=res.orig_shape)
+
+        if verbose:
+            name = os.path.basename(getattr(res, "path", "image"))
+            removed = (~keep).sum().item()
+            print(f"[{name}] Nested {child_cls} removed: {removed}")
+
+        cleaned.append(res)
+
+    return cleaned
 
 def fully_dynamic_nms(preds, iou_min=0.1, iou_max=0.6):
     from ultralytics.engine.results import Boxes
@@ -101,7 +261,17 @@ def run_model_on_images(
 
     # 2. Apply the custom NMS function to the results
     processed_results = fully_dynamic_nms(batch_results)
-
+    processed_results = filter_by_scale_per_image(
+        processed_results,
+        mode="ratio",
+        low=0.7,
+        high=2.0,
+        metric="geom",          # works well across altitude/scale changes
+        min_boxes_for_stats=3,  # if an image has <3 boxes, skip filtering for that image
+        keep_at_least=1,        # optional: avoid empty results by keeping the largest box
+        verbose=True
+    )
+    processed_results = remove_nested_class0(processed_results, parent_cls=1, child_cls=0, overlap_thr=0.8)
     # 3. Prepare output folders
     label_dir = BASE_DIR / session_id / "labels"
     label_dir.mkdir(parents=True, exist_ok=True)
