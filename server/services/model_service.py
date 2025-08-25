@@ -33,6 +33,64 @@ with open("classification_model.pt", "wb") as f:
     
 classification_model = YOLO("classification_model.pt")
 
+def remove_small_boxes(
+    results,
+    min_side: int = 20,        # minimum width/height in pixels
+    min_rel_area: float = 3e-4,# minimum relative area (fraction of image area)
+    verbose: bool = True,
+):
+    """
+    Removes boxes that are too small based on absolute side length and relative area.
+    
+    Args:
+        results: List of YOLO Results objects.
+        min_side: Minimum allowed width and height in pixels.
+        min_rel_area: Minimum allowed area relative to image area.
+    """
+    from ultralytics.engine.results import Boxes
+    filtered = []
+
+    for res in results:
+        if res is None or not len(res.boxes):
+            filtered.append(res)
+            continue
+
+        device = res.boxes.data.device
+        boxes = res.boxes.xyxy
+        scores = res.boxes.conf
+        cls = res.boxes.cls if hasattr(res.boxes, "cls") else torch.zeros_like(scores, device=device)
+
+        w = boxes[:, 2] - boxes[:, 0]
+        h = boxes[:, 3] - boxes[:, 1]
+        area = w * h
+
+        img_h, img_w = res.orig_shape
+        img_area = float(img_h * img_w)
+
+        keep = (
+            (w >= min_side) &
+            (h >= min_side) &
+            ((area / img_area) >= min_rel_area)
+        )
+
+        kept_boxes = boxes[keep]
+        kept_scores = scores[keep].unsqueeze(1)
+        kept_cls = cls[keep].unsqueeze(1)
+
+        if kept_boxes.numel() == 0:
+            res.boxes = Boxes(torch.empty((0, 6), device=device), orig_shape=res.orig_shape)
+        else:
+            res.boxes = Boxes(torch.cat([kept_boxes, kept_scores, kept_cls], dim=1), orig_shape=res.orig_shape)
+
+        if verbose:
+            name = os.path.basename(getattr(res, "path", "image"))
+            print(f"[{name}] Removed small boxes: {len(boxes) - int(keep.sum())}, Kept: {int(keep.sum())}")
+
+        filtered.append(res)
+
+    return filtered
+
+
 def filter_by_scale_per_image(
     results,
     mode: str = "ratio",          # "ratio": bounds = mean * [low, high],  "zscore": mean ± k*std
@@ -261,18 +319,22 @@ def run_model_on_images(
 
     # 2. Apply the custom NMS function to the results
     processed_results = fully_dynamic_nms(batch_results)
+    # 3. remove too small boxes
+    processed_results = remove_small_boxes(processed_results, min_side=10, min_rel_area=7e-5)
+    # 4. remove different scalled boxes
     processed_results = filter_by_scale_per_image(
         processed_results,
         mode="ratio",
         low=0.7,
-        high=2.0,
+        high=2.5,
         metric="geom",          # works well across altitude/scale changes
         min_boxes_for_stats=3,  # if an image has <3 boxes, skip filtering for that image
         keep_at_least=1,        # optional: avoid empty results by keeping the largest box
         verbose=True
     )
+    # 5. remove overlap boxes
     processed_results = remove_nested_class0(processed_results, parent_cls=1, child_cls=0, overlap_thr=0.8)
-    # 3. Prepare output folders
+    # 6. Prepare output folders
     label_dir = BASE_DIR / session_id / "labels"
     label_dir.mkdir(parents=True, exist_ok=True)
     final_results_folder = BASE_DIR / session_id / "images"
