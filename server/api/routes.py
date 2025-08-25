@@ -81,6 +81,7 @@ async def upload_multiple(session_id: str = Form(...), files: List[UploadFile] =
             metadata["images"][filename] = {
                 "dugongCount": dugong_count,
                 "motherCalfCount": calf_count,
+                "totalCount": dugong_count + (2 * calf_count),
                 "imageClass": image_class,
                 "capturedDate": extract_captured_date(filename),
                 "uploadedAt": datetime.utcnow().isoformat()
@@ -299,9 +300,9 @@ async def backfill_detections(session_id: str):
             metadata["images"][file_name] = {
                 "dugongCount": dugong_count,
                 "motherCalfCount": calf_count,
+                "totalCount": total_count,
                 "imageClass": image_class,
                 "capturedDate": extract_captured_date(file_name),
-                "totalCount": total_count,
                 "uploadedAt": datetime.utcnow().isoformat()
             }
 
