@@ -194,47 +194,47 @@ const DashboardPage = () => {
   };
 
   // Handle delete selected images
-  // const handleDeleteSelected = async () => {
-  //   if (!currentSessionId || selectedImages.size === 0) {
-  //     return;
-  //   }
+  const handleDeleteSelected = async () => {
+    if (!currentSessionId || selectedImages.size === 0) {
+      return;
+    }
 
-  //   setIsDeleting(true);
-  //   try {
-  //     const imageNames = Array.from(selectedImages).map(index => {
-  //       const imageData = apiResponse?.results?.[index];
-  //       return imageData?.imageUrl?.split("/").pop();
-  //     }).filter(Boolean);
+    setIsDeleting(true);
+    try {
+      const imageNames = Array.from(selectedImages).map(index => {
+        const imageData = apiResponse?.results?.[index];
+        return imageData?.imageUrl?.split("/").pop();
+      }).filter(Boolean);
 
-  //     if (imageNames.length === 0) {
-  //       alert("No valid images to delete");
-  //       return;
-  //     }
+      if (imageNames.length === 0) {
+        alert("No valid images to delete");
+        return;
+      }
 
-  //     // Delete each selected image
-  //     for (const imageName of imageNames) {
-  //       try {
-  //         await axios.delete(`/api/delete-image/${currentSessionId}/${imageName}`);
-  //       } catch (error) {
-  //         console.error(`Failed to delete image ${imageName}:`, error);
-  //       }
-  //     }
+      // Delete each selected image
+      for (const imageName of imageNames) {
+        try {
+          await axios.delete(`/api/delete-image/${currentSessionId}/${imageName}`);
+        } catch (error) {
+          console.error(`Failed to delete image ${imageName}:`, error);
+        }
+      }
 
-  //     // Clear selection and refresh metadata
-  //     setSelectedImages(new Set());
-  //     await fetchSessionMetadata(currentSessionId);
+      // Clear selection and refresh metadata
+      setSelectedImages(new Set());
+      await fetchSessionMetadata(currentSessionId);
 
-  //     // Adjust current image if needed
-  //     if (selectedImages.has(currentImage - 1) && currentImage > 1) {
-  //       handlePrevious();
-  //     }
-  //   } catch (error) {
-  //     console.error("Failed to delete selected images:", error);
-  //     alert("Failed to delete some images. Please try again.");
-  //   } finally {
-  //     setIsDeleting(false);
-  //   }
-  // };
+      // Adjust current image if needed
+      if (selectedImages.has(currentImage - 1) && currentImage > 1) {
+        handlePrevious();
+      }
+    } catch (error) {
+      console.error("Failed to delete selected images:", error);
+      alert("Failed to delete some images. Please try again.");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   // Handle delete all images
   const handleDeleteAll = async () => {
@@ -323,7 +323,7 @@ const DashboardPage = () => {
       onUpload={handleImageUpload}
       onImageSelect={handleImageSelect}
       onSelectAll={handleSelectAll}
-      // onDeleteSelected={handleDeleteSelected}
+      onDeleteSelected={handleDeleteSelected}
       onDeleteAll={handleDeleteAll}
       isDeleting={isDeleting}
     />

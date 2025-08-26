@@ -46,7 +46,7 @@ const ImageViewer = ({
   onUpload,
   onImageSelect,
   onSelectAll,
-  // onDeleteSelected,
+  onDeleteSelected,
   onDeleteAll,
   isDeleting = false,
 }: ImageViewerProps) => {
@@ -175,16 +175,16 @@ const ImageViewer = ({
             )} */}
           </div>
           <div className="flex gap-2">
-            {onDeleteAll && (
+            {onDeleteSelected && (
               <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
                 <DialogTrigger asChild>
-                  <button disabled={isDeleting} className="text-sm text-red-600 hover:text-red-700 cursor-pointer flex items-center gap-2">
-                    Delete All
+                  <button disabled={isDeleting || selectedImages.size === 0} className="text-sm text-red-600 hover:text-red-700 cursor-pointer flex items-center gap-2 disabled:text-gray-400 disabled:cursor-not-allowed">
+                    Delete Selected ({selectedImages.size})
                   </button>
                 </DialogTrigger>
                 <DialogContent className="sm:max-w-md">
                   <DialogHeader>
-                    <DialogTitle>Are you sure you want to delete all images?</DialogTitle>
+                    <DialogTitle>Are you sure you want to delete {selectedImages.size} selected image{selectedImages.size !== 1 ? 's' : ''}?</DialogTitle>
                     <DialogDescription>
                       This action cannot be undone.
                     </DialogDescription>
@@ -199,7 +199,7 @@ const ImageViewer = ({
                     </Button>
                     <Button
                       onClick={() => {
-                        if (onDeleteAll) onDeleteAll();
+                        if (onDeleteSelected) onDeleteSelected();
                         setDeleteDialogOpen(false);
                       }}
                       className="text-blue-500 hover:text-blue-600 cursor-pointer"
