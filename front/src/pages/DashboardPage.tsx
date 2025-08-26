@@ -30,6 +30,8 @@ const DashboardPage = () => {
 
   const [markedPoorImages, setMarkedPoorImages] = useState<string[]>([]);
   const [isPolling, setIsPolling] = useState(false);
+  const [selectedImages, setSelectedImages] = useState<Set<number>>(new Set());
+  const [isDeleting, setIsDeleting] = useState(false);
   // const [lastImageCount, setLastImageCount] = useState(0);
 
   // Use the upload session ID as the primary session ID for the dashboard
@@ -139,30 +141,130 @@ const DashboardPage = () => {
   };
 
   // Handle image deletion
-  const handleDeleteImage = async () => {
-    if (!currentSessionId || !currentImageData) {
+  // const handleDeleteImage = async () => {
+  //   if (!currentSessionId || !currentImageData) {
+  //     return;
+  //   }
+
+  //   try {
+  //     const imageName = currentImageData.imageUrl?.split("/").pop();
+  //     if (!imageName) {
+  //       alert("Could not determine image name");
+  //       return;
+  //     }
+
+  //     await axios.delete(`/api/delete-image/${currentSessionId}/${imageName}`);
+
+  //     // Refresh the session metadata to update the UI
+  //     await fetchSessionMetadata(currentSessionId);
+
+  //     // If we deleted the last image, go to the previous one
+  //     if (currentImage === totalImages && currentImage > 1) {
+  //       handlePrevious();
+  //     }
+  //   } catch (error) {
+  //     console.error("Failed to delete image:", error);
+  //     alert("Failed to delete image. Please try again.");
+  //   }
+  // };
+
+  // Handle image selection
+  const handleImageSelect = (imageIndex: number) => {
+    setSelectedImages(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(imageIndex)) {
+        newSet.delete(imageIndex);
+      } else {
+        newSet.add(imageIndex);
+      }
+      return newSet;
+    });
+  };
+
+  // Handle select all images
+  const handleSelectAll = () => {
+    if (selectedImages.size === totalImages) {
+      // If all are selected, deselect all
+      setSelectedImages(new Set());
+    } else {
+      // Select all images
+      const allIndices = Array.from({ length: totalImages }, (_, i) => i);
+      setSelectedImages(new Set(allIndices));
+    }
+  };
+
+  // Handle delete selected images
+  // const handleDeleteSelected = async () => {
+  //   if (!currentSessionId || selectedImages.size === 0) {
+  //     return;
+  //   }
+
+  //   setIsDeleting(true);
+  //   try {
+  //     const imageNames = Array.from(selectedImages).map(index => {
+  //       const imageData = apiResponse?.results?.[index];
+  //       return imageData?.imageUrl?.split("/").pop();
+  //     }).filter(Boolean);
+
+  //     if (imageNames.length === 0) {
+  //       alert("No valid images to delete");
+  //       return;
+  //     }
+
+  //     // Delete each selected image
+  //     for (const imageName of imageNames) {
+  //       try {
+  //         await axios.delete(`/api/delete-image/${currentSessionId}/${imageName}`);
+  //       } catch (error) {
+  //         console.error(`Failed to delete image ${imageName}:`, error);
+  //       }
+  //     }
+
+  //     // Clear selection and refresh metadata
+  //     setSelectedImages(new Set());
+  //     await fetchSessionMetadata(currentSessionId);
+
+  //     // Adjust current image if needed
+  //     if (selectedImages.has(currentImage - 1) && currentImage > 1) {
+  //       handlePrevious();
+  //     }
+  //   } catch (error) {
+  //     console.error("Failed to delete selected images:", error);
+  //     alert("Failed to delete some images. Please try again.");
+  //   } finally {
+  //     setIsDeleting(false);
+  //   }
+  // };
+
+  // Handle delete all images
+  const handleDeleteAll = async () => {
+    if (!currentSessionId || totalImages === 0) {
       return;
     }
 
+    setIsDeleting(true);
     try {
-      const imageName = currentImageData.imageUrl?.split("/").pop();
-      if (!imageName) {
-        alert("Could not determine image name");
-        return;
+      const imageNames = apiResponse?.results?.map((imageData: any) => 
+        imageData.imageUrl?.split("/").pop()
+      ).filter(Boolean) || [];
+
+      // Delete each image
+      for (const imageName of imageNames) {
+        try {
+          await axios.delete(`/api/delete-image/${currentSessionId}/${imageName}`);
+        } catch (error) {
+          console.error(`Failed to delete image ${imageName}:`, error);
+        }
       }
 
-      await axios.delete(`/api/delete-image/${currentSessionId}/${imageName}`);
-
-      // Refresh the session metadata to update the UI
+      // Clear selection and refresh metadata
+      setSelectedImages(new Set());
       await fetchSessionMetadata(currentSessionId);
-
-      // If we deleted the last image, go to the previous one
-      if (currentImage === totalImages && currentImage > 1) {
-        handlePrevious();
-      }
     } catch (error) {
-      console.error("Failed to delete image:", error);
-      alert("Failed to delete image. Please try again.");
+      console.error("Failed to delete all images:", error);
+      alert("Failed to delete some images. Please try again.");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -196,7 +298,7 @@ const DashboardPage = () => {
         <AnimatedBackground />
         <Navbar />
 
-        <div className="relative z-10 pt-6 pb-6 px-[10%]">
+        <div className="relative z-10 pt-6 pb-6 px-[7%]">
           <DashboardHeader />
 
           {isPolling && (
@@ -206,29 +308,37 @@ const DashboardPage = () => {
           )}
 
           {/* Main Content */}
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-            {/* Left Section - Image Display */}
-            <div className="lg:col-span-3">
-              <ImageViewer
-                currentImage={currentImage}
-                totalImages={totalImages}
-                currentImageData={currentImageData}
-                allImagesData={apiResponse?.results || []}
-                onPrevious={handlePrevious}
-                onNext={handleNext}
-                onDelete={handleDeleteImage}
-                onUpload={handleImageUpload}
-              />
-            </div>
+          <div className="grid grid-cols-1 lg:grid-cols-6 gap-6">
+  {/* Left Section - Image Display */}
+  <div className="lg:col-span-4">
+    <ImageViewer
+      currentImage={currentImage}
+      totalImages={totalImages}
+      currentImageData={currentImageData}
+      allImagesData={apiResponse?.results || []}
+      selectedImages={selectedImages}
+      onPrevious={handlePrevious}
+      onNext={handleNext}
+      // onDelete={handleDeleteImage}
+      onUpload={handleImageUpload}
+      onImageSelect={handleImageSelect}
+      onSelectAll={handleSelectAll}
+      // onDeleteSelected={handleDeleteSelected}
+      onDeleteAll={handleDeleteAll}
+      isDeleting={isDeleting}
+    />
+  </div>
 
-            {/* Right Section - Results */}
-            <ResultsSidebar
-              currentImageData={currentImageData}
-              markedPoorImages={markedPoorImages}
-              onMarkPoor={handleMarkPoor}
-            />
-          </div>
-        </div>
+  {/* Right Section - Results */}
+  <div className="lg:col-span-2">
+    <ResultsSidebar
+      currentImageData={currentImageData}
+      markedPoorImages={markedPoorImages}
+      onMarkPoor={handleMarkPoor}
+    />
+  </div>
+</div>
+</div>
       </div>
 
       {/* Navigation Guard Confirmation Dialog */}

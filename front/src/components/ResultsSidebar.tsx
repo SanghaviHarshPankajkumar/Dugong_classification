@@ -63,7 +63,7 @@ const ResultsSidebar = ({ currentImageData }: ResultsSidebarProps) => {
   };
 
   return (
-    <div className="w-full min-h-screen p-4">
+    <div className="w-full min-h-screen p-2">
       <div className="w-full flex flex-col gap-4">
 
         <div className="flex flex-col md:flex-row items-stretch md:items-center gap-2 md:gap-4 w-full md:w-auto">
@@ -78,7 +78,7 @@ const ResultsSidebar = ({ currentImageData }: ResultsSidebarProps) => {
         </div>
         {/* Legends Card */}
         <Card className="bg-white shadow-lg border-0">
-          <CardHeader className="pb-3">
+          <CardHeader className="pb-0">
             <CardTitle className="flex items-center gap-2 text-base font-medium text-gray-900">
               <svg
                 width="24"
@@ -96,12 +96,12 @@ const ResultsSidebar = ({ currentImageData }: ResultsSidebarProps) => {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3 pt-0">
-            <div className="flex items-center justify-between py-2">
+            <div className="flex items-center justify-between">
               <span className="text-sm text-gray-700">Dugong</span>
               <div className="w-4 h-4 border-2 border-blue-500 rounded-sm"></div>
             </div>
-            <hr className="border-gray-200" />
-            <div className="flex items-center justify-between py-2">
+            <hr className="border-gray-300 border-dashed border-t-2 my-4" />
+            <div className="flex items-center justify-between">
               <span className="text-sm text-gray-700">Mother Calf</span>
               <div className="w-4 h-4 border-2 border-red-500 rounded-sm"></div>
             </div>
@@ -110,7 +110,7 @@ const ResultsSidebar = ({ currentImageData }: ResultsSidebarProps) => {
 
         {/* Detection Results Card */}
         <Card className="bg-white shadow-lg border-0">
-          <CardHeader className="pb-3">
+          <CardHeader className="pb-0">
             <CardTitle className="flex items-center gap-2 text-base font-medium text-gray-900">
               <svg
                 width="28"
@@ -142,27 +142,27 @@ const ResultsSidebar = ({ currentImageData }: ResultsSidebarProps) => {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3 pt-0">
-            <div className="flex items-center justify-between py-2">
+            <div className="flex items-center justify-between">
               <span className="text-sm text-gray-700">Dugong Count</span>
               <Badge
-                variant="secondary"
-                className="bg-gray-100 text-gray-900 hover:bg-gray-200"
+                className="text-gray-900 bg-white"
               >
-                {currentImageData?.dugongCount || "N/A"}
+                {currentImageData?.dugongCount || "-"}
               </Badge>
             </div>
-            <hr className="border-gray-200" />
-            <div className="flex items-center justify-between py-2">
+            <hr className="border-gray-300 border-dashed border-t-2 my-4" />
+            <div className="flex items-center justify-between">
               <span className="text-sm text-gray-700">Mother Calf Count</span>
               <Badge
-                variant="secondary"
-                className="bg-gray-100 text-gray-900 hover:bg-gray-200"
+
+                className="text-gray-900 bg-white"
               >
-                {currentImageData?.motherCalfCount || "N/A"}
+
+                {currentImageData?.motherCalfCount || 0}
               </Badge>
             </div>
-            <hr className="border-gray-200" />
-            <div className="flex items-center justify-between py-2">
+            <hr className="border-gray-300 border-dashed border-t-2 my-4" />
+            <div className="flex items-center justify-between">
               <div className="flex items-center gap-1">
                 <span className="text-sm text-gray-700">Total Count</span>
                 <TooltipProvider>
@@ -197,22 +197,20 @@ const ResultsSidebar = ({ currentImageData }: ResultsSidebarProps) => {
                 </TooltipProvider>
               </div>
               <Badge
-                variant="secondary"
-                className="bg-gray-100 text-gray-900 hover:bg-gray-200"
+                className="text-gray-900 bg-white"
               >
                 {(currentImageData?.motherCalfCount
                   ? 2 * currentImageData.motherCalfCount
                   : 0) + (currentImageData?.dugongCount || 0)}
               </Badge>
             </div>
-            <hr className="border-gray-200" />
-            <div className="flex items-center justify-between py-2">
+            <hr className="border-gray-300 border-dashed border-t-2 my-4" />
+            <div className="flex items-center justify-between">
               <span className="text-sm text-gray-700">Behavior</span>
               <Badge
-                variant="secondary"
-                className="bg-gray-100 text-gray-900 hover:bg-gray-200"
+                className="text-gray-900 bg-white"
               >
-                {getBehaviorLabel(currentImageData?.imageClass) || "N/A"}
+                {getBehaviorLabel(currentImageData?.imageClass) || "-"}
               </Badge>
             </div>
           </CardContent>
@@ -220,7 +218,7 @@ const ResultsSidebar = ({ currentImageData }: ResultsSidebarProps) => {
 
         {/* Meta Data Card */}
         <Card className="bg-white shadow-lg border-0">
-          <CardHeader className="pb-3">
+          <CardHeader className="pb-0">
             <CardTitle className="flex items-center gap-2 text-base font-medium text-gray-900">
               <svg
                 width="28"
@@ -242,21 +240,21 @@ const ResultsSidebar = ({ currentImageData }: ResultsSidebarProps) => {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3 pt-0">
-            <div className="flex items-center justify-between py-2">
+            <div className="flex items-center justify-between">
               <span className="text-sm text-gray-700">Captured Date</span>
               <Badge
-                variant="secondary"
-                className="bg-gray-100 text-gray-900 hover:bg-gray-200"
+
+                className="text-gray-900 bg-white"
               >
-                {currentImageData?.capturedDate || "N/A"}
+                  {currentImageData?.capturedDate || "-"}
               </Badge>
             </div>
-            <hr className="border-gray-200" />
-            <div className="flex items-center justify-between py-2">
+            <hr className="border-gray-300 border-dashed border-t-2 my-4" />
+            <div className="flex items-center justify-between">
               <span className="text-sm text-gray-700">Processed Date</span>
               <Badge
-                variant="secondary"
-                className="bg-gray-100 text-gray-900 hover:bg-gray-200"
+
+                className="text-gray-900 bg-white"
               >
                 {currentImageData?.createdAt
                   ? new Date(currentImageData.createdAt).toLocaleDateString(
@@ -267,16 +265,16 @@ const ResultsSidebar = ({ currentImageData }: ResultsSidebarProps) => {
                       year: "numeric",
                     }
                   )
-                  : "22 Aug 2025"}
+                  : "-"}
               </Badge>
             </div>
-            <hr className="border-gray-200" />
-            <div className="flex items-center justify-between py-2">
+            <hr className="border-gray-300 border-dashed border-t-2 my-4" />
+              <div className="flex items-center justify-between">
               <span className="text-sm text-gray-700">Image Name</span>
               <div className="group relative">
                 <Badge
-                  variant="secondary"
-                  className="bg-gray-100 text-gray-900 hover:bg-gray-200 max-w-[120px] truncate cursor-help"
+
+                  className="text-gray-900 bg-white  truncate cursor-help"
                 >
                   {currentImageData?.imageUrl
                     ? (() => {
@@ -286,13 +284,9 @@ const ResultsSidebar = ({ currentImageData }: ResultsSidebarProps) => {
                       }
                       return fileName;
                     })()
-                    : "Image 1"}
+                    : "-"}
                 </Badge>
-                <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">
-                  {currentImageData?.imageUrl
-                    ? currentImageData.imageUrl.split("/").pop()
-                    : "Image 1"}
-                </div>
+               
               </div>
             </div>
           </CardContent>
