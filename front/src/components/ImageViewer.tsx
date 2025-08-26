@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight, Trash2, Upload, Check, CheckSquare, Square } from "lucide-react";
+import { ChevronLeft, ChevronRight, Upload,  CheckSquare, Square } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -60,7 +60,7 @@ const ImageViewer = ({
   };
 
   const isAllSelected = selectedImages.size === totalImages && totalImages > 0;
-  const hasSelectedImages = selectedImages.size > 0;
+  // const hasSelectedImages = selectedImages.size > 0;
 
   return (
     <div className="bg-white rounded-xl shadow-lg border-0 p-3 sm:p-6">
