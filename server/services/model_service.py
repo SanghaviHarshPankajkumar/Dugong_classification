@@ -319,20 +319,20 @@ def run_model_on_images(
 
     # 2. Apply the custom NMS function to the results
     processed_results = fully_dynamic_nms(batch_results)
-    # 3. remove too small boxes
-    processed_results = remove_small_boxes(processed_results, min_side=10, min_rel_area=7e-5)
-    # 4. remove different scalled boxes
-    processed_results = filter_by_scale_per_image(
-        processed_results,
-        mode="ratio",
-        low=0.7,
-        high=2.5,
-        metric="geom",          # works well across altitude/scale changes
-        min_boxes_for_stats=3,  # if an image has <3 boxes, skip filtering for that image
-        keep_at_least=1,        # optional: avoid empty results by keeping the largest box
-        verbose=True
-    )
-    # 5. remove overlap boxes
+    # # 3. remove too small boxes
+    # processed_results = remove_small_boxes(processed_results, min_side=10, min_rel_area=7e-5)
+    # # 4. remove different scalled boxes
+    # processed_results = filter_by_scale_per_image(
+    #     processed_results,
+    #     mode="ratio",
+    #     low=0.7,
+    #     high=2.5,
+    #     metric="geom",          # works well across altitude/scale changes
+    #     min_boxes_for_stats=3,  # if an image has <3 boxes, skip filtering for that image
+    #     keep_at_least=1,        # optional: avoid empty results by keeping the largest box
+    #     verbose=True
+    # )
+    # # 5. remove overlap boxes
     processed_results = remove_nested_class0(processed_results, parent_cls=1, child_cls=0, overlap_thr=0.8)
     # 6. Prepare output folders
     label_dir = BASE_DIR / session_id / "labels"
