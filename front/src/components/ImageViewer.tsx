@@ -47,7 +47,7 @@ const ImageViewer = ({
   onImageSelect,
   onSelectAll,
   onDeleteSelected,
-  onDeleteAll,
+  // onDeleteAll,
   isDeleting = false,
 }: ImageViewerProps) => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
