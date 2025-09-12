@@ -72,16 +72,18 @@ const SignInSection = () => {
           const apiError = error.response?.data as ApiError;
           throw new Error(
             apiError?.message ||
-            apiError?.detail ||
-            apiError?.error ||
-            "Login failed. Please check your credentials."
+              apiError?.detail ||
+              apiError?.error ||
+              "Login failed. Please check your credentials."
           );
         }
         throw new Error("Network error. Please try again.");
       }
     },
     onError: (error: ApiError) => {
-      toast.error(error.detail || error.message || error.error || "Login failed");
+      toast.error(
+        error.detail || error.message || error.error || "Login failed"
+      );
     },
     onSuccess: (data: LoginResponse & { session_id?: string }) => {
       const token = data.access_token || data.token;
@@ -114,30 +116,40 @@ const SignInSection = () => {
   const togglePasswordVisibility = () => setShowPassword((prev) => !prev);
 
   return (
-    <div className="min-h-screen bg-white flex flex-col">
-      {/* Top Logos */}
-      <div className="flex justify-center items-center pt-32 md:pt-16 sm:pt-8">
-        <div className="flex flex-wrap items-center justify-center gap-8 sm:gap-12 md:gap-16">
-          {["UAE-1.png", "UAE-2.png", "UAE-3.png"].map((logo, idx) => (
-            <div key={idx} className="w-20 h-20 sm:w-24 sm:h-24">
-              <img
-                src={`./${logo}`}
-                alt={`UAE Agency ${idx + 1}`}
-                className="w-full h-full object-contain"
-              />
-            </div>
-          ))}
+    <div className="min-h-screen bg-white flex flex-col relative">
+      {/* Bottom Right Logos - Fixed Position */}
+      <div className="fixed bottom-6 right-6 z-10 hidden sm:flex gap-3">
+        {["UAE-2.png", "UAE-1.png"].map((logo, idx) => (
+          <div key={idx} className="w-24 h-24 md:w-28 md:h-28 lg:w-32 lg:h-32">
+            <img
+              src={`./${logo}`}
+              alt={`UAE Agency ${idx + 1}`}
+              className="w-full h-full object-contain"
+            />
+          </div>
+        ))}
+      </div>
+
+      {/* UAE-3 Logo - Positioned Higher (Mobile: normal flow, Desktop: absolute) */}
+      <div className="md:absolute md:top-12 lg:top-8 md:left-1/2 md:transform md:-translate-x-1/2 md:z-5 flex justify-center mb-4 sm:mb-6 md:mb-0">
+        <div className="w-36 h-36 sm:w-40 sm:h-40 md:w-48 md:h-48 lg:w-52 lg:h-52 p-2 md:p-3 lg:p-4">
+          <img
+            src="./UAE-3.png"
+            alt="UAE Agency 3"
+            className="w-full h-full object-contain"
+          />
         </div>
       </div>
 
-      {/* Main Form */}
-      <div className="flex-1 flex items-center justify-center px-4">
+      {/* Main Form Container */}
+      <div className="flex-1 flex flex-col items-center justify-center px-4 py-8">
+        {/* Form Container */}
         <div className="w-full max-w-sm">
           <h2 className="text-2xl font-bold text-center mb-2 text-gray-900">
             Sign In
           </h2>
           <p className="text-center text-gray-600 mb-6 text-sm">
-          Provide your details to proceed to the dashboard
+            Provide your details to proceed to the dashboard
           </p>
 
           <form
@@ -147,7 +159,10 @@ const SignInSection = () => {
           >
             {/* Email */}
             <div className="space-y-1.5">
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+              <label
+                htmlFor="email"
+                className="block text-sm font-medium text-gray-700"
+              >
                 Email
               </label>
               <Input
@@ -156,10 +171,11 @@ const SignInSection = () => {
                 placeholder="Enter Email"
                 autoComplete="email"
                 {...register("email")}
-                className={`h-11 bg-gray-50 rounded-lg ${errors.email
-                  ? "border-red-500 focus-visible:ring-red-500"
-                  : "border-gray-200 focus-visible:ring-blue-500"
-                  }`}
+                className={`h-11 bg-gray-50 rounded-lg ${
+                  errors.email
+                    ? "border-red-500 focus-visible:ring-red-500"
+                    : "border-gray-200 focus-visible:ring-blue-500"
+                }`}
                 aria-invalid={!!errors.email}
               />
               {errors.email && (
@@ -171,7 +187,10 @@ const SignInSection = () => {
 
             {/* Password */}
             <div className="space-y-1.5">
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+              <label
+                htmlFor="password"
+                className="block text-sm font-medium text-gray-700"
+              >
                 Password
               </label>
               <div className="relative">
@@ -181,10 +200,11 @@ const SignInSection = () => {
                   placeholder="Enter Password"
                   autoComplete="current-password"
                   {...register("password")}
-                  className={`h-11 bg-gray-50 rounded-lg pr-10 ${errors.password
-                    ? "border-red-500 focus-visible:ring-red-500"
-                    : "border-gray-200 focus-visible:ring-blue-500"
-                    }`}
+                  className={`h-11 bg-gray-50 rounded-lg pr-10 ${
+                    errors.password
+                      ? "border-red-500 focus-visible:ring-red-500"
+                      : "border-gray-200 focus-visible:ring-blue-500"
+                  }`}
                   aria-invalid={!!errors.password}
                 />
                 <button
@@ -193,7 +213,11 @@ const SignInSection = () => {
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
                   aria-label={showPassword ? "Hide password" : "Show password"}
                 >
-                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  {showPassword ? (
+                    <EyeOff className="w-4 h-4" />
+                  ) : (
+                    <Eye className="w-4 h-4" />
+                  )}
                 </button>
               </div>
               {errors.password && (
@@ -213,6 +237,19 @@ const SignInSection = () => {
             </Button>
           </form>
         </div>
+      </div>
+
+      {/* Mobile Bottom Logos - Only visible on small screens */}
+      <div className="sm:hidden flex justify-center gap-4 pb-6 pt-4">
+        {["UAE-2.png", "UAE-1.png"].map((logo, idx) => (
+          <div key={idx} className="w-16 h-16">
+            <img
+              src={`./${logo}`}
+              alt={`UAE Agency ${idx + 1}`}
+              className="w-full h-full object-contain"
+            />
+          </div>
+        ))}
       </div>
     </div>
   );
