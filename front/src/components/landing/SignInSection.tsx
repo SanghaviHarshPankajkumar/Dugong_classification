@@ -28,6 +28,7 @@ interface LoginResponse {
   message?: string;
   username?: string;
   email?: string;
+  session_id?: string;
 }
 
 interface ApiError {
@@ -48,64 +49,40 @@ const SignInSection = () => {
     formState: { errors },
   } = useForm<LoginFormInputs>({
     resolver: zodResolver(loginSchema),
-    defaultValues: {
-      email: "",
-      password: "",
-    },
+    defaultValues: { email: "", password: "" },
   });
 
   const loginMutation = useMutation({
     mutationFn: async (data: LoginFormInputs): Promise<LoginResponse> => {
-      try {
-        const payload = { ...data, email: data.email.toLowerCase() };
-        const response = await axios.post<LoginResponse>(
-          "/auth/login",
-          payload,
-          {
-            headers: { "Content-Type": "application/json" },
-            timeout: 10000,
-          }
-        );
-        return response.data;
-      } catch (error) {
-        if (axios.isAxiosError(error)) {
-          const apiError = error.response?.data as ApiError;
-          throw new Error(
-            apiError?.message ||
-              apiError?.detail ||
-              apiError?.error ||
-              "Login failed. Please check your credentials."
-          );
-        }
-        throw new Error("Network error. Please try again.");
-      }
+      const payload = { ...data, email: data.email.toLowerCase() };
+      const response = await axios.post<LoginResponse>("/auth/login", payload, {
+        headers: { "Content-Type": "application/json" },
+        timeout: 10000,
+      });
+      return response.data;
     },
     onError: (error: ApiError) => {
       toast.error(
         error.detail || error.message || error.error || "Login failed"
       );
     },
-    onSuccess: (data: LoginResponse & { session_id?: string }) => {
+    onSuccess: (data: LoginResponse) => {
       const token = data.access_token || data.token;
       if (token) {
-        try {
-          Cookies.set("access_token", token, {
-            expires: 7,
-            secure: process.env.NODE_ENV === "production",
-            sameSite: "strict",
-          });
-          setToken(token);
-          setUsername(data.username || "User");
-          setEmail(data.email || "user@gmail.com");
-          if (data.session_id) {
-            setSessionId(data.session_id);
-            setUploadSessionId(data.session_id);
-          }
-          toast.success("Logged in successfully");
-          navigate("/dashboard", { replace: true });
-        } catch {
-          toast.error("Login successful but session setup failed");
+        Cookies.set("access_token", token, {
+          expires: 7,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: "strict",
+        });
+        setToken(token);
+        setUsername(data.username || "User");
+        setEmail(data.email || "user@gmail.com");
+        if (data.session_id) {
+          setSessionId(data.session_id);
+          setUploadSessionId(data.session_id);
         }
+        toast.success("Logged in successfully");
+        navigate("/dashboard", { replace: true });
       } else {
         toast.error("Login failed: No access token received");
       }
@@ -113,37 +90,19 @@ const SignInSection = () => {
   });
 
   const onSubmit = (data: LoginFormInputs) => loginMutation.mutate(data);
-  const togglePasswordVisibility = () => setShowPassword((prev) => !prev);
 
   return (
-    <div className="min-h-screen bg-white flex flex-col justify-between relative">
-      {/* Bottom Right Logos - Fixed Position (Desktop only) */}
-      <div className="fixed bottom-6 right-6 z-10 hidden sm:flex gap-3">
-        {["UAE-2.png", "UAE-1.png"].map((logo, idx) => (
-          <div key={idx} className="w-24 h-24 md:w-28 md:h-28 lg:w-32 lg:h-32">
-            <img
-              src={`./${logo}`}
-              alt={`UAE Agency ${idx + 1}`}
-              className="w-full h-full object-contain"
-            />
-          </div>
-        ))}
+    <div className="h-full flex flex-col bg-white">
+      {/* Top Logo */}
+      <div className="flex justify-center pt-6">
+        <img
+          src="./UAE-3.png"
+          alt="UAE Agency 3"
+          className="w-[350px] h-[350px] object-contain"
+        />
       </div>
-
-      {/* UAE-3 Logo */}
-      {/* UAE-3 Logo */}
-      <div className="flex justify-center items-center mt-6 md:absolute md:top-8 md:left-1/2 md:-translate-x-1/2">
-        <div className="w-48 sm:w-64 md:w-72 lg:w-80 max-w-full">
-          <img
-            src="./UAE-3.png"
-            alt="UAE Agency 3"
-            className="w-full h-auto object-contain"
-          />
-        </div>
-      </div>
-
-      {/* Main Form Container */}
-      <div className="flex flex-col items-center justify-center px-4 py-8 flex-1">
+      {/* Form Section */}
+      <div className="flex flex-col items-center justify-center flex-1 px-4 py-4">
         <div className="w-full max-w-sm">
           <h2 className="text-2xl font-bold text-center mb-2 text-gray-900">
             Sign In
@@ -176,12 +135,9 @@ const SignInSection = () => {
                     ? "border-red-500 focus-visible:ring-red-500"
                     : "border-gray-200 focus-visible:ring-blue-500"
                 }`}
-                aria-invalid={!!errors.email}
               />
               {errors.email && (
-                <p className="text-red-500 text-xs" role="alert">
-                  {errors.email.message}
-                </p>
+                <p className="text-red-500 text-xs">{errors.email.message}</p>
               )}
             </div>
 
@@ -205,13 +161,11 @@ const SignInSection = () => {
                       ? "border-red-500 focus-visible:ring-red-500"
                       : "border-gray-200 focus-visible:ring-blue-500"
                   }`}
-                  aria-invalid={!!errors.password}
                 />
                 <button
                   type="button"
-                  onClick={togglePasswordVisibility}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
-                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500"
                 >
                   {showPassword ? (
                     <EyeOff className="w-4 h-4" />
@@ -221,7 +175,7 @@ const SignInSection = () => {
                 </button>
               </div>
               {errors.password && (
-                <p className="text-red-500 text-xs" role="alert">
+                <p className="text-red-500 text-xs">
                   {errors.password.message}
                 </p>
               )}
@@ -239,16 +193,15 @@ const SignInSection = () => {
         </div>
       </div>
 
-      {/* Mobile Bottom Logos */}
-      <div className="sm:hidden flex justify-end gap-2 pb-4 pt-2 pr-4">
+      {/* Bottom Logos */}
+      <div className="flex justify-center sm:justify-end gap-3 p-6">
         {["UAE-2.png", "UAE-1.png"].map((logo, idx) => (
-          <div key={idx} className="w-24 h-24">
-            <img
-              src={`./${logo}`}
-              alt={`UAE Agency ${idx + 1}`}
-              className="w-full h-full object-contain"
-            />
-          </div>
+          <img
+            key={idx}
+            src={`./${logo}`}
+            alt={`UAE Agency ${idx + 1}`}
+            className="max-w-[90px] sm:max-w-[110px] md:max-w-[130px] lg:max-w-[150px] h-auto object-contain"
+          />
         ))}
       </div>
     </div>
