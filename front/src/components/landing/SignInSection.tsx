@@ -116,8 +116,8 @@ const SignInSection = () => {
   const togglePasswordVisibility = () => setShowPassword((prev) => !prev);
 
   return (
-    <div className="min-h-screen bg-white flex flex-col relative">
-      {/* Bottom Right Logos - Fixed Position */}
+    <div className="min-h-screen bg-white flex flex-col justify-between relative">
+      {/* Bottom Right Logos - Fixed Position (Desktop only) */}
       <div className="fixed bottom-6 right-6 z-10 hidden sm:flex gap-3">
         {["UAE-2.png", "UAE-1.png"].map((logo, idx) => (
           <div key={idx} className="w-24 h-24 md:w-28 md:h-28 lg:w-32 lg:h-32">
@@ -130,20 +130,20 @@ const SignInSection = () => {
         ))}
       </div>
 
-      {/* UAE-3 Logo - Positioned Higher (Mobile: normal flow, Desktop: absolute) */}
-      <div className="md:absolute md:top-12 lg:top-8 md:left-1/2 md:transform md:-translate-x-1/2 md:z-5 flex justify-center mb-4 sm:mb-6 md:mb-0">
-        <div className="w-36 h-36 sm:w-40 sm:h-40 md:w-48 md:h-48 lg:w-52 lg:h-52 p-2 md:p-3 lg:p-4">
+      {/* UAE-3 Logo */}
+      {/* UAE-3 Logo */}
+      <div className="flex justify-center items-center mt-6 md:absolute md:top-8 md:left-1/2 md:-translate-x-1/2">
+        <div className="w-48 sm:w-64 md:w-72 lg:w-80 max-w-full">
           <img
             src="./UAE-3.png"
             alt="UAE Agency 3"
-            className="w-full h-full object-contain"
+            className="w-full h-auto object-contain"
           />
         </div>
       </div>
 
       {/* Main Form Container */}
-      <div className="flex-1 flex flex-col items-center justify-center px-4 py-8">
-        {/* Form Container */}
+      <div className="flex flex-col items-center justify-center px-4 py-8 flex-1">
         <div className="w-full max-w-sm">
           <h2 className="text-2xl font-bold text-center mb-2 text-gray-900">
             Sign In
@@ -239,10 +239,10 @@ const SignInSection = () => {
         </div>
       </div>
 
-      {/* Mobile Bottom Logos - Only visible on small screens */}
-      <div className="sm:hidden flex justify-center gap-4 pb-6 pt-4">
+      {/* Mobile Bottom Logos */}
+      <div className="sm:hidden flex justify-end gap-2 pb-4 pt-2 pr-4">
         {["UAE-2.png", "UAE-1.png"].map((logo, idx) => (
-          <div key={idx} className="w-16 h-16">
+          <div key={idx} className="w-24 h-24">
             <img
               src={`./${logo}`}
               alt={`UAE Agency ${idx + 1}`}
