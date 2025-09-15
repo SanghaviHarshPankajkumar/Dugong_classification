@@ -42,7 +42,7 @@ const HeroSection = () => {
       </div>
 
       {/* Tiny text at bottom-left (responsive, with spacing and no overlap) */}
-      <p className="absolute left-3 bottom-3 sm:left-4 sm:bottom-4 text-[9px] sm:text-[10px] md:text-[11px] lg:text-[12px] text-white font-bold opacity-40 z-20 whitespace-normal break-words max-w-[120px] leading-tight  px-2 py-1 rounded">
+      <p className="absolute left-3 bottom-3 sm:left-4 sm:bottom-4 text-[9px] sm:text-[10px] md:text-[11px] lg:text-[12px] text-white font-bold opacity-40 z-20 whitespace-normal break-words max-w-[150px] leading-tight  px-2 py-1 rounded">
         Developed by TGIS
       </p>
     </div>
