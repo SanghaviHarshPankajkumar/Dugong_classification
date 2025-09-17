@@ -21,10 +21,6 @@ const HeroSection = () => {
             alt="Dugong"
             className="w-28 h-28 md:w-36 md:h-36 lg:w-40 lg:h-40 object-contain drop-shadow-2xl"
           />
-          {/* Floating bubbles */}
-          <div className="absolute -top-2 -right-2 w-3 h-3 bg-white/60 rounded-full animate-bounce"></div>
-          <div className="absolute top-4 -right-4 w-2 h-2 bg-white/40 rounded-full animate-bounce delay-300"></div>
-          <div className="absolute -top-4 right-2 w-1.5 h-1.5 bg-white/50 rounded-full animate-bounce delay-500"></div>
         </div>
       </div>
 
