@@ -131,7 +131,7 @@ const Navbar: React.FC<NavbarProps> = ({ imageCount = 0 }) => {
           {/* Left Section - Logo & Brand */}
           <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
             <img
-              src="/dugong_blue.png"
+              src="/dugong.png"
               alt="Dugong"
               className="w-12 h-12 object-contain text-[#0077B6]"
             />
