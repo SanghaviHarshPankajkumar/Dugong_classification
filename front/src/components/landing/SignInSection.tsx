@@ -94,11 +94,11 @@ const SignInSection = () => {
   return (
     <div className="h-full flex flex-col bg-white">
       {/* Top Logo */}
-      <div className="flex justify-center pt-6">
+      <div className="flex justify-center pt-2">
         <img
           src="./UAE-3.png"
           alt="UAE Agency 3"
-          className="w-[350px] h-[350px] object-contain"
+          className="w-56 sm:w-72 md:w-[28rem] lg:w-[32rem] h-auto object-contain"
         />
       </div>
       {/* Form Section */}
@@ -200,7 +200,7 @@ const SignInSection = () => {
             key={idx}
             src={`./${logo}`}
             alt={`UAE Agency ${idx + 1}`}
-            className="max-w-[90px] sm:max-w-[110px] md:max-w-[130px] lg:max-w-[150px] h-auto object-contain"
+            className="w-16 sm:w-24 md:w-28 lg:w-36 h-auto object-contain"
           />
         ))}
       </div>

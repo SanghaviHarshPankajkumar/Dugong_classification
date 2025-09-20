@@ -15,11 +15,11 @@ const HeroSection = () => {
 
       {/* Dugong Illustration */}
       <div className="relative z-10 mb-6">
-        <div className="relative">
+        <div className="w-32 h-32 md:w-40 md:h-40 lg:w-44 lg:h-44 rounded-full overflow-hidden drop-shadow-lg">
           <img
             src="/dugong.png"
             alt="Dugong"
-            className="w-28 h-28 md:w-36 md:h-36 lg:w-40 lg:h-40 object-contain drop-shadow-2xl"
+            className="w-full h-full object-cover"
           />
         </div>
       </div>
@@ -38,7 +38,7 @@ const HeroSection = () => {
       </div>
 
       {/* Tiny text at bottom-left (responsive, with spacing and no overlap) */}
-      <p className="absolute left-3 bottom-3 sm:left-4 sm:bottom-4 text-[9px] sm:text-[10px] md:text-[11px] lg:text-[12px] text-white font-bold opacity-40 z-20 whitespace-normal break-words max-w-[150px] leading-tight  px-2 py-1 rounded">
+      <p className="absolute left-3 bottom-3 sm:left-4 sm:bottom-4 text-[9px] sm:text-[10px] md:text-[11px] lg:text-[12px] text-white font-bold opacity-40 z-20 whitespace-normal break-words max-w-[140px] leading-tight  px-2 py-1 rounded">
         Developed by TGIS
       </p>
     </div>
