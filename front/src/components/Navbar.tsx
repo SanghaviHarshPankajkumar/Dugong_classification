@@ -133,7 +133,7 @@ const Navbar: React.FC<NavbarProps> = ({ imageCount = 0 }) => {
             <img
               src="/dugong.png"
               alt="Dugong"
-              className="w-24 h-24 object-contain text-[#0077B6] bg-white"
+              className="w-24 h-24 object-contain text-[#0077B6]"
             />
             <h1 className="text-lg sm:text-xl text-white">
               <span className="text-[#0077B6] font-bold">Dugong Detection System</span>
@@ -229,5 +229,6 @@ const Navbar: React.FC<NavbarProps> = ({ imageCount = 0 }) => {
     </nav>
   );
 };
+
 
 export default Navbar;
