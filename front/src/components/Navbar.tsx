@@ -131,7 +131,7 @@ const Navbar: React.FC<NavbarProps> = ({ imageCount = 0 }) => {
           {/* Left Section - Logo & Brand */}
           <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
             <img
-              src="/dugong.png"
+              src="/dugong_blue.png"
               alt="Dugong"
               className="w-24 h-24 object-contain text-[#0077B6]"
             />
@@ -232,3 +232,4 @@ const Navbar: React.FC<NavbarProps> = ({ imageCount = 0 }) => {
 
 
 export default Navbar;
+
